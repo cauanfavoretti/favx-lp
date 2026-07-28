@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Heavy source material / raw exports — not needed to run the site
+assets/_originais/
+uploads/
+uploads 2/
+
+# Stray source image (leftover upload)
+IMG_2100.png

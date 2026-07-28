@@ -1,0 +1,535 @@
+<!-- ============ STEPS / PROCESS SECTION ============ -->
+<!-- Apple Liquid Glass Style with Premium Refraction, Specular Highlights & Depth -->
+
+<style>
+  /* ===== Liquid Glass Design Tokens ===== */
+  :root {
+    --glass-blur: 24px;
+    --glass-blur-mobile: 16px;
+    --glass-saturation: 180%;
+    --glass-radius: 28px;
+    --glass-radius-sm: 20px;
+
+    /* Light mode tints */
+    --glass-bg-light: rgba(255, 255, 255, 0.12);
+    --glass-border-light: rgba(255, 255, 255, 0.5);
+    --glass-border-light-low: rgba(255, 255, 255, 0.05);
+    --glass-shadow-light: rgba(0, 0, 0, 0.12);
+
+    /* Dark mode tints */
+    --glass-bg-dark: rgba(30, 30, 30, 0.35);
+    --glass-border-dark: rgba(255, 255, 255, 0.08);
+    --glass-border-dark-rim: rgba(255, 255, 255, 0.15);
+    --glass-shadow-dark: rgba(0, 0, 0, 0.40);
+
+    /* Spring easing (Apple style) */
+    --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ===== Steps Section Container ===== */
+  #steps-section {
+    position: relative;
+    padding: 120px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, rgba(5,5,5,1) 0%, rgba(10,10,15,0.8) 100%);
+  }
+
+  #steps-section::before {
+    /* Animated blob background for glass refraction effect */
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,92,255,0.15), transparent 70%);
+    filter: blur(120px);
+    pointer-events: none;
+    animation: liquidFlow 15s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  #steps-section::after {
+    content: "";
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,122,0,0.08), transparent 65%);
+    filter: blur(110px);
+    pointer-events: none;
+    animation: liquidFlow 18s ease-in-out infinite reverse;
+    z-index: 0;
+  }
+
+  @keyframes liquidFlow {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -40px) scale(1.1); }
+  }
+
+  .steps-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== Section Header ===== */
+  .steps-header {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 60px;
+  }
+
+  .steps-header-tag {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 100px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.12);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.85);
+    margin-bottom: 16px;
+  }
+
+  .steps-header h2 {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0 0 16px;
+    color: #fff;
+  }
+
+  .steps-header p {
+    font-size: clamp(16px, 2vw, 18px);
+    line-height: 1.6;
+    color: rgba(255,255,255,.72);
+    margin: 0;
+  }
+
+  /* ===== Steps Grid ===== */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  /* Connector line between steps (desktop only) */
+  .steps-grid::before {
+    content: "";
+    position: absolute;
+    top: 60px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255,255,255,.1) 15%,
+      rgba(0,92,255,.3) 50%,
+      rgba(255,255,255,.1) 85%,
+      transparent 100%
+    );
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1024px) {
+    .steps-grid::before {
+      display: none;
+    }
+  }
+
+  /* ===== Glass Step Card ===== */
+  .glass-step {
+    position: relative;
+    padding: 32px;
+    border-radius: var(--glass-radius);
+    background: var(--glass-bg-light);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    box-shadow:
+      0 8px 32px var(--glass-shadow-light),
+      inset 0 1px 0 var(--glass-border-light),
+      inset 0 -1px 0 var(--glass-border-light-low);
+    transition: transform 0.4s var(--spring-smooth),
+                box-shadow 0.4s ease,
+                background 0.4s ease;
+    overflow: hidden;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Liquid gradient border (top edge highlight) */
+  .glass-step::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.6) 0%,
+      rgba(255,255,255,0.1) 40%,
+      rgba(255,255,255,0.3) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Specular highlight (curved glass lens effect at top) */
+  .glass-step::after {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: -5%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.35), transparent 70%);
+    filter: blur(18px);
+    pointer-events: none;
+    opacity: 0.6;
+    transition: opacity 0.4s ease;
+  }
+
+  /* Inner content wrapper (sits above pseudo-elements) */
+  .glass-step-inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Step number/icon in glass */
+  .step-number {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow:
+      0 4px 12px rgba(0,0,0,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      inset 0 -1px 0 rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    color: #005CFF;
+    overflow: hidden;
+    transition: all 0.4s var(--spring-smooth);
+  }
+
+  /* Number glass highlight (lens) */
+  .step-number::before {
+    content: "";
+    position: absolute;
+    top: -25%;
+    left: -20%;
+    width: 40%;
+    height: 40%;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.5), transparent 70%);
+    filter: blur(8px);
+    pointer-events: none;
+  }
+
+  /* Step title */
+  .step-title {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+    margin: 0;
+    transition: color 0.4s ease;
+  }
+
+  /* Step description */
+  .step-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255,255,255,.72);
+    margin: 0;
+    transition: color 0.4s ease;
+  }
+
+  /* ===== States ===== */
+
+  /* Pending state (default: frosted, less shine) */
+  .glass-step.pending {
+    background: rgba(255,255,255,0.08);
+    opacity: 0.7;
+  }
+
+  .glass-step.pending::after {
+    opacity: 0.25;
+  }
+
+  /* Active state (highlighted, stronger shine) */
+  .glass-step.active {
+    background: rgba(0,92,255,0.15);
+    border: 1px solid rgba(0,92,255,0.4);
+    box-shadow:
+      0 12px 48px rgba(0,92,255,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      inset 0 -1px 0 rgba(255,255,255,0.08);
+  }
+
+  .glass-step.active::after {
+    opacity: 1;
+    background: radial-gradient(ellipse at center, rgba(0,92,255,0.4), transparent 70%);
+  }
+
+  .glass-step.active .step-number {
+    background: rgba(0,92,255,0.3);
+    border: 1px solid rgba(0,92,255,0.5);
+    box-shadow:
+      0 6px 20px rgba(0,92,255,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      inset 0 -1px 0 rgba(255,255,255,0.1);
+    color: #4B8BFF;
+  }
+
+  /* Completed state (subtle checkmark, bluish tint) */
+  .glass-step.completed {
+    background: rgba(0,92,255,0.08);
+    border: 1px solid rgba(0,92,255,0.25);
+    opacity: 0.9;
+  }
+
+  .glass-step.completed .step-number {
+    background: rgba(0,92,255,0.15);
+    border: 1px solid rgba(0,92,255,0.3);
+    color: #00B4FF;
+    font-size: 20px;
+  }
+
+  /* ===== Hover state ===== */
+  .glass-step:hover:not(.pending) {
+    transform: translateY(-4px) scale(1.015);
+    box-shadow:
+      0 16px 56px rgba(0,0,0,0.18),
+      inset 0 1px 0 rgba(255,255,255,0.7),
+      inset 0 -1px 0 rgba(255,255,255,0.1);
+  }
+
+  .glass-step:hover::after {
+    opacity: 0.9;
+  }
+
+  /* ===== Mobile touch state ===== */
+  @media (hover: none) {
+    .glass-step:active:not(.pending) {
+      transform: scale(0.98);
+    }
+  }
+
+  /* ===== Dark mode ===== */
+  @media (prefers-color-scheme: dark) {
+    .glass-step {
+      background: var(--glass-bg-dark);
+      box-shadow:
+        0 8px 32px var(--glass-shadow-dark),
+        inset 0 1px 0 var(--glass-border-dark-rim),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+    }
+
+    .glass-step.pending {
+      background: rgba(20,20,25,0.4);
+      opacity: 0.6;
+    }
+
+    .glass-step.active {
+      background: rgba(0,92,255,0.12);
+      border: 1px solid rgba(0,92,255,0.3);
+      box-shadow:
+        0 12px 48px rgba(0,92,255,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        inset 0 -1px 0 rgba(0,0,0,0.4);
+    }
+
+    .glass-step.completed {
+      background: rgba(0,92,255,0.06);
+      border: 1px solid rgba(0,92,255,0.2);
+    }
+  }
+
+  /* ===== Responsiveness ===== */
+  @media (max-width: 768px) {
+    #steps-section {
+      padding: 80px 16px;
+    }
+
+    .steps-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .glass-step {
+      padding: 24px;
+      --glass-blur: var(--glass-blur-mobile);
+    }
+
+    .steps-header {
+      margin-bottom: 40px;
+    }
+
+    .steps-header h2 {
+      font-size: 28px;
+    }
+  }
+
+  /* ===== Accessibility ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-step,
+    .step-number {
+      transition: none;
+    }
+
+    #steps-section::before,
+    #steps-section::after {
+      animation: none;
+    }
+
+    .glass-step:hover {
+      transform: none;
+    }
+  }
+
+  /* Ensure text contrast */
+  .step-title,
+  .step-description {
+    color: inherit;
+  }
+
+  .glass-step.pending .step-title {
+    color: rgba(255,255,255,.7);
+  }
+
+  .glass-step.pending .step-description {
+    color: rgba(255,255,255,.55);
+  }
+</style>
+
+<section id="steps-section">
+  <div class="steps-content">
+    <!-- Header -->
+    <div class="steps-header">
+      <div class="steps-header-tag">Como Funciona</div>
+      <h2>Seu Caminho para Mais Vendas</h2>
+      <p>Siga um processo simples e eficiente que transforma conversas em oportunidades reais.</p>
+    </div>
+
+    <!-- Steps Grid -->
+    <div class="steps-grid">
+      <!-- Step 1: Integration -->
+      <div class="glass-step active">
+        <div class="glass-step-inner">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Integração Simples</h3>
+          <p class="step-description">Conecte a FAVX com seus sistemas em minutos. Suporte a CRM, WhatsApp, email e mais.</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Training -->
+      <div class="glass-step">
+        <div class="glass-step-inner">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Treinamento IA</h3>
+          <p class="step-description">Nossa IA aprende sobre seu negócio, clientes e produtos para respostas personalizadas.</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Automation -->
+      <div class="glass-step">
+        <div class="glass-step-inner">
+          <div class="step-number">3</div>
+          <h3 class="step-title">Automação 24/7</h3>
+          <p class="step-description">A FAVX qualifica leads, responde dúvidas e agenda vendedores automaticamente.</p>
+        </div>
+      </div>
+
+      <!-- Step 4: Analytics -->
+      <div class="glass-step">
+        <div class="glass-step-inner">
+          <div class="step-number">4</div>
+          <h3 class="step-title">Relatórios em Tempo Real</h3>
+          <p class="step-description">Dashboard inteligente mostra métricas, tendências e oportunidades de melhoria.</p>
+        </div>
+      </div>
+
+      <!-- Step 5: Results -->
+      <div class="glass-step pending">
+        <div class="glass-step-inner">
+          <div class="step-number">✓</div>
+          <h3 class="step-title">Resultados Comprovados</h3>
+          <p class="step-description">Aumento de conversão, redução de custos e crescimento sustentável do negócio.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-top:60px;">
+      <a href="#pricing" style="display:inline-flex;align-items:center;gap:11px;padding:19px 36px;border-radius:18px;background:linear-gradient(180deg,rgba(0,102,255,.95),rgba(0,58,190,.95));border:1px solid rgba(150,185,255,.55);color:#fff;font:inherit;font-weight:700;font-size:16.5px;cursor:pointer;box-shadow:0 14px 48px rgba(0,92,255,.55),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;text-decoration:none;">
+        Começar Agora
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- JavaScript for state management (optional interactivity) -->
+<script>
+  (function() {
+    'use strict';
+
+    const steps = document.querySelectorAll('.glass-step');
+
+    // Simple state cycling on click (demo)
+    steps.forEach((step, index) => {
+      step.addEventListener('click', function() {
+        // Cycle through states: pending → active → completed → pending
+        if (this.classList.contains('pending')) {
+          this.classList.remove('pending');
+          this.classList.add('active');
+        } else if (this.classList.contains('active')) {
+          this.classList.remove('active');
+          this.classList.add('completed');
+        } else if (this.classList.contains('completed')) {
+          this.classList.remove('completed');
+          this.classList.add('pending');
+        }
+      });
+    });
+
+    // Optional: Animate steps into view on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.dataset.animated) {
+          entry.target.dataset.animated = 'true';
+          // Add a subtle animation class here if desired
+        }
+      });
+    }, { rootMargin: '0px 0px -100px 0px' });
+
+    steps.forEach(step => observer.observe(step));
+  })();
+</script>

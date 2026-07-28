@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAVX — Hero</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  /* overflow-x:clip contains the oversized glows WITHOUT breaking position:sticky
+     (overflow-x:hidden would create a scroll container and unpin the hero) */
+  html,body{background:#050505;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip;}
+  ::selection{background:rgba(0,92,255,.4);}
+
+  /* tall track: the hero stays pinned while you scroll through it, so the
+     scroll-driven distortion has room to build before the page moves on */
+  #heroWrap{position:relative;height:220vh;}
+  #hero{
+    position:sticky;
+    top:0;
+    height:100vh;height:100svh;
+    overflow:hidden;
+    perspective:1100px;
+    perspective-origin:50% 50%;
+    background:#050505;
+    cursor:default;
+  }
+  /* section revealed after the pinned hero releases */
+  #after{
+    position:relative;z-index:1;background:#050505;
+    min-height:70vh;display:flex;align-items:flex-start;justify-content:center;
+    padding:110px 24px;
+  }
+  #after .inner{max-width:760px;text-align:center;}
+  #after h2{
+    font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,'Helvetica Neue',system-ui,sans-serif;
+    font-weight:600;letter-spacing:-.02em;font-size:clamp(30px,4.5vw,52px);line-height:1.08;margin:0 0 18px;
+  }
+  #after p{color:rgba(255,255,255,.6);font-size:clamp(16px,2vw,19px);line-height:1.6;margin:0;}
+
+  /* ---- 3D scene: canvas oversized so camera motion never reveals edges ---- */
+  #scene{
+    position:absolute;inset:0;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  #gl, .vid{
+    position:absolute;
+    top:-6%;left:-6%;
+    width:112%;height:112%;
+    object-fit:cover;
+    display:block;
+  }
+  /* videos stay in the DOM (so they decode) but invisible while WebGL renders them */
+  .vid{opacity:0;pointer-events:none;}
+  .vid.asFallback{opacity:1;}
+
+  /* ---- volumetric light layers (each on its own parallax depth) ---- */
+  .glow{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:screen;will-change:transform;}
+  #glowBlue{
+    bottom:-22%;left:-14%;width:64vw;height:64vw;
+    background:radial-gradient(circle at 40% 40%,rgba(0,92,255,.34),transparent 62%);
+    filter:blur(90px);
+  }
+  #glowOrange{
+    top:-18%;right:-12%;width:52vw;height:52vw;
+    background:radial-gradient(circle at 55% 45%,rgba(255,122,0,.20),transparent 60%);
+    filter:blur(100px);
+  }
+
+  /* ---- floating dust particles (nearest depth layer) ---- */
+  #particles{position:absolute;inset:0;pointer-events:none;will-change:transform;}
+  .p{
+    position:absolute;border-radius:50%;
+    background:rgba(160,195,255,.85);
+    box-shadow:0 0 8px rgba(0,92,255,.9);
+    animation:floatP ease-in-out infinite;
+    opacity:0;
+  }
+  @keyframes floatP{
+    0%,100%{transform:translateY(0) translateX(0);opacity:0;}
+    12%{opacity:var(--o);}
+    50%{transform:translateY(-46px) translateX(10px);opacity:var(--o);}
+    88%{opacity:var(--o);}
+  }
+
+  /* ---- readability overlay (kept in the 20–35% band) ---- */
+  #shade{
+    position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:
+      radial-gradient(ellipse at 50% 42%,rgba(5,5,5,0) 30%,rgba(5,5,5,.38) 100%),
+      linear-gradient(180deg,rgba(5,5,5,.42) 0%,rgba(5,5,5,.10) 38%,rgba(5,5,5,.12) 62%,rgba(5,5,5,.60) 100%);
+  }
+
+  /* ---- content ---- */
+  #content{
+    position:relative;z-index:3;
+    height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:120px 24px 90px;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:9px;
+    padding:8px 16px;margin-bottom:30px;border-radius:100px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(255,255,255,.85);
+  }
+  .badge i{width:7px;height:7px;border-radius:50%;background:#005CFF;box-shadow:0 0 12px #005CFF;}
+  h1{
+    /* Apple headline typography: SF Pro Display, Semibold, tight optical tracking.
+       On Apple devices -apple-system resolves to the real San Francisco face. */
+    font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,'Helvetica Neue',system-ui,sans-serif;
+    font-weight:600;font-size:clamp(48px,8vw,104px);
+    line-height:1.05;letter-spacing:-.022em;margin:0 0 26px;max-width:900px;text-wrap:balance;
+    font-optical-sizing:auto;font-synthesis:none;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  }
+  h1 .hl{
+    background:linear-gradient(180deg,#eaf1ff,#7fa8ff);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 34px rgba(0,92,255,.7));
+  }
+  .sub{
+    max-width:640px;margin:0 auto 40px;
+    font-size:clamp(17px,2vw,20px);line-height:1.6;color:rgba(255,255,255,.72);
+  }
+  .cta{
+    display:inline-flex;align-items:center;gap:11px;
+    padding:19px 36px;border-radius:18px;
+    background:linear-gradient(180deg,rgba(0,102,255,.95),rgba(0,58,190,.95));
+    border:1px solid rgba(150,185,255,.55);color:#fff;
+    font:inherit;font-weight:700;font-size:16.5px;cursor:pointer;
+    box-shadow:0 14px 48px rgba(0,92,255,.55),inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;
+  }
+  .cta:hover{
+    transform:scale(1.045) translateY(-2px);
+    box-shadow:0 20px 70px rgba(0,92,255,.75),inset 0 1px 0 rgba(255,255,255,.45);
+  }
+
+  #scroll{
+    position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:3;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  #scroll .mouse{
+    width:26px;height:42px;border:1.5px solid rgba(255,255,255,.3);border-radius:16px;
+    display:flex;justify-content:center;padding-top:8px;
+  }
+  #scroll .dot{
+    width:4px;height:8px;border-radius:4px;background:#005CFF;box-shadow:0 0 8px #005CFF;
+    animation:scrollDot 1.8s ease-in-out infinite;
+  }
+  #scroll span{font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.4);text-transform:uppercase;}
+  @keyframes scrollDot{0%{transform:translateY(0);opacity:0;}25%{opacity:1;}100%{transform:translateY(16px);opacity:0;}}
+
+  @media (prefers-reduced-motion:reduce){
+    .p,#scroll .dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="heroWrap">
+<section id="hero">
+  <div id="scene">
+    <video id="vA" class="vid" src="./0717.mp4" muted playsinline preload="auto"></video>
+    <video id="vB" class="vid" src="./0717 (2).mp4" muted playsinline preload="auto"></video>
+    <canvas id="gl"></canvas>
+  </div>
+  <div class="glow" id="glowBlue"></div>
+  <div class="glow" id="glowOrange"></div>
+  <div id="particles"></div>
+  <div id="shade"></div>
+
+  <div id="content">
+    <div class="badge"><i></i>O Futuro da IA Comercial</div>
+    <h1>Cresça Sem <span class="hl">Limites</span>.</h1>
+    <p class="sub">A FAVX transforma sua operação comercial com Inteligência Artificial que automatiza conversas, qualifica leads, aumenta as vendas e ajuda o seu negócio a escalar sem limites.</p>
+    <button class="cta">
+      Conheça a Tecnologia FAVX
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <div id="scroll">
+    <div class="mouse"><span class="dot"></span></div>
+    <span>Rolar</span>
+  </div>
+</section>
+</div>
+
+<section id="after">
+  <div class="inner">
+    <h2>Inteligência que trabalha por você.</h2>
+    <p>Automação, qualificação de leads e vendas em uma só plataforma — construída para escalar junto com o seu negócio.</p>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  const hero     = document.getElementById('hero');
+  const scene    = document.getElementById('scene');
+  const canvas   = document.getElementById('gl');
+  const content  = document.getElementById('content');
+  const glowBlue = document.getElementById('glowBlue');
+  const glowOr   = document.getElementById('glowOrange');
+  const partsEl  = document.getElementById('particles');
+  const scrollHint = document.getElementById('scroll');
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = matchMedia('(hover: none)').matches;
+
+  /* ---------------- particles ---------------- */
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('span');
+    p.className = 'p';
+    const s = 2 + Math.random() * 2.5;
+    p.style.width = p.style.height = s + 'px';
+    p.style.left = (4 + Math.random() * 92) + '%';
+    p.style.top  = (12 + Math.random() * 76) + '%';
+    p.style.setProperty('--o', (0.15 + Math.random() * 0.4).toFixed(2));
+    p.style.animationDuration = (9 + Math.random() * 10).toFixed(1) + 's';
+    p.style.animationDelay = (-Math.random() * 14).toFixed(1) + 's';
+    partsEl.appendChild(p);
+  }
+
+  /* ---------------- videos: normal playback, seamless loop ----------------
+     The video simply plays at 1x. Two players share the asset: near the end
+     of the clip the second one starts from the beginning and the shader
+     crossfades between them, so the loop restart is never a visible cut. */
+  const vA = document.getElementById('vA');
+  const vB = document.getElementById('vB');
+  vA.muted = vB.muted = true;
+
+  let fallbackMode = false;
+
+  function useFallback(){
+    fallbackMode = true;
+    canvas.style.display = 'none';
+    vA.classList.add('asFallback');
+    vB.classList.add('asFallback');
+  }
+
+  const FADE = 1.6;           // seconds of crossfade across the loop seam
+  let cur = vA, nxt = vB;     // cur is on screen; nxt fades in near the end
+  let dispMix = 0;            // 0 → show vA, 1 → show vB (continuous, never jumps)
+  let seam = 0;               // 0→1→0 across the fade window, drives the optical veil
+
+  const tryPlay = v => v.play().catch(() => {});
+  const kick = () => { tryPlay(cur); removeEventListener('pointerdown', kick); removeEventListener('touchstart', kick); };
+  tryPlay(vA);
+  addEventListener('pointerdown', kick);
+  addEventListener('touchstart', kick, { passive: true });
+
+  function loopTick() {
+    const d = cur.duration;
+    if (!d || !isFinite(d)) return;
+    const t = cur.currentTime;
+    let fade = 0;
+    seam = 0;
+    if (t > d - FADE) {
+      if (nxt.paused) { try { nxt.currentTime = 0.02; } catch (e) {} tryPlay(nxt); }
+      const lin = Math.min(1, (t - (d - FADE)) / FADE);
+      fade = lin * lin * (3 - 2 * lin); // smoothstep
+      // optical veil: rises mid-fade, gone by the end — masks the blend as a
+      // slow breath of the scene instead of a content change
+      seam = Math.sin(Math.PI * lin);
+    }
+    dispMix = (cur === vA) ? fade : 1 - fade;
+    if (fade >= 1) {
+      cur.pause();
+      const tmp = cur; cur = nxt; nxt = tmp;
+    }
+  }
+
+  /* ---------------- WebGL ---------------- */
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+
+  if (!gl) useFallback();
+
+  const VERT = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+
+  const FRAG = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uTexA, uTexB;
+    uniform float uMix, uTime, uPulse, uSeam, uScroll;
+    uniform vec2 uRes, uVidRes, uMouse;
+    uniform vec4 uRipple[5]; /* xy origin (uv), z birth time, w strength */
+
+    vec2 coverUV(vec2 uv){
+      float ra = uRes.x / uRes.y;
+      float rv = uVidRes.x / uVidRes.y;
+      vec2 s = (ra > rv) ? vec2(1.0, rv / ra) : vec2(ra / rv, 1.0);
+      return (uv - 0.5) * s + 0.5;
+    }
+
+    vec3 vid(vec2 suv){
+      vec2 vuv = coverUV(suv);
+      vec3 a = texture2D(uTexA, vuv).rgb;
+      if (uMix < 0.001) return a;
+      vec3 b = texture2D(uTexB, vuv).rgb;
+      return mix(a, b, uMix);
+    }
+
+    void main(){
+      float aspect = uRes.x / uRes.y;
+      vec2 uv = vUv;
+      uv.y = 1.0 - uv.y;
+
+      /* breathing: extremely slow, near-imperceptible zoom + drift */
+      float breath = 0.0040 * sin(uTime * 0.42) + 0.0022 * sin(uTime * 0.19 + 1.7);
+      vec2 drift = vec2(0.0016 * sin(uTime * 0.16), 0.0013 * cos(uTime * 0.22 + 0.8));
+
+      /* base camera: gentle zoom (hides edges) + shader-level parallax.
+         Scrolling pushes the virtual camera deeper into the scene. */
+      float zoom = 1.045 + breath + uPulse * 0.010 + uSeam * 0.013 + uScroll * 0.075;
+      /* mouse parallax with DEPTH: outer regions of the frame shift more than
+         the focal sphere, so looking around feels like a real 3D volume */
+      vec2 fromF = uv - vec2(0.5, 0.47);
+      vec2 par = uMouse * vec2(0.011, -0.009)
+               + uMouse * vec2(0.022, -0.018) * dot(fromF, fromF);
+      uv = (uv - 0.5) / zoom + 0.5 + par + drift;
+
+      /* scroll immersion: heavy lens warp + travelling wave the deeper you go */
+      if (uScroll > 0.001) {
+        vec2 cc = uv - vec2(0.5, 0.47); cc.x *= aspect;
+        float d2 = dot(cc, cc);
+        cc *= 1.0 - uScroll * (0.55 * d2);          // barrel pinch toward the core
+        cc.x += sin(cc.y * 9.0 + uTime * 2.1) * 0.016 * uScroll; // liquid wave
+        cc.y += cos(cc.x * 7.0 - uTime * 1.7) * 0.013 * uScroll;
+        float sw = 1.0 + uScroll * 0.10 * sin(uTime * 1.3);      // pulsing depth
+        cc *= sw;
+        cc.x /= aspect;
+        uv = cc + vec2(0.5, 0.47);
+      }
+
+      /* click ripples: expanding rings displacing the image outward */
+      vec2 shift = vec2(0.0);
+      float rippleLight = 0.0;
+      for (int i = 0; i < 5; i++){
+        vec4 r = uRipple[i];
+        if (r.w > 0.001){
+          float age = uTime - r.z;
+          if (age > 0.0 && age < 2.4){
+            vec2 dv = uv - r.xy; dv.x *= aspect;
+            float dist = length(dv);
+            float rad = age * 0.34;
+            float ring = exp(-pow((dist - rad) * 16.0, 2.0));
+            float env = r.w * exp(-age * 1.9);
+            vec2 dir = dv / max(dist, 1e-4);
+            dir.x /= aspect;
+            shift += dir * ring * env * 0.014;
+            rippleLight += ring * env;
+          }
+        }
+      }
+      uv += shift;
+
+      /* subtle lens magnification around the sphere while pulsing */
+      vec2 c = uv - vec2(0.5, 0.47); c.x *= aspect;
+      float dc = length(c);
+      float lens = exp(-dc * dc * 5.5) * uPulse * 0.020;
+      uv = (uv - vec2(0.5, 0.47)) * (1.0 - lens) + vec2(0.5, 0.47);
+
+      /* chromatic aberration: faint at edges, richer during the pulse */
+      float dCenter = length((vUv - 0.5) * vec2(aspect, 1.0));
+      vec2 caDir = (vUv - 0.5) * (0.0022 * smoothstep(0.15, 0.85, dCenter) + uPulse * 0.0028 + uSeam * 0.0014
+                   + uScroll * (0.006 + 0.012 * dCenter));
+      vec3 col;
+      col.r = vid(uv + caDir).r;
+      col.g = vid(uv).g;
+      col.b = vid(uv - caDir).b;
+
+      /* gentle depth of field toward the edges */
+      float blurAmt = smoothstep(0.48, 0.98, dCenter) * (1.0 + uPulse * 1.4) + uSeam * 0.55
+                    + uScroll * (0.8 + 2.2 * smoothstep(0.25, 1.0, dCenter));
+      vec2 px = blurAmt * 2.6 / uRes;
+      vec3 blur = ( vid(uv + px) + vid(uv - px)
+                  + vid(uv + vec2(px.x, -px.y)) + vid(uv - vec2(px.x, -px.y)) ) * 0.25;
+      col = mix(col, blur, min(blurAmt, 1.0) * 0.65);
+
+      /* soft bloom on highlights */
+      float lum = dot(col, vec3(0.299, 0.587, 0.114));
+      float glow = smoothstep(0.60, 0.95, lum);
+      col += (col * 0.55 + blur * 0.45) * glow * (0.26 + uSeam * 0.16);
+
+      /* light that leans very gently toward the cursor */
+      vec2 m = vec2(0.5) + uMouse * vec2(0.5, -0.5) * 0.32;
+      vec2 dm = vUv - m; dm.x *= aspect;
+      col *= 1.0 + exp(-dot(dm, dm) * 2.4) * 0.055;
+
+      /* click pulse: brief blue/orange split-tone lift */
+      vec3 tone = mix(vec3(0.0, 0.36, 1.0), vec3(1.0, 0.50, 0.10), smoothstep(0.25, 0.85, lum));
+      col += tone * uPulse * (0.085 + rippleLight * 0.9);
+      col += rippleLight * vec3(0.35, 0.55, 1.0) * 0.14;
+
+      /* vignette (deepens with scroll) + film grain */
+      col *= mix(mix(0.78, 0.42, uScroll), 1.0, smoothstep(1.28, 0.34, dCenter));
+      float g = fract(sin(dot(vUv * uRes + uTime * 61.7, vec2(12.9898, 78.233))) * 43758.5453);
+      col += (g - 0.5) * 0.022;
+
+      /* scroll fade-out: the video darkens into black as you scroll deeper,
+         gone completely by the time the distortion peaks */
+      col *= 1.0 - smoothstep(0.30, 0.96, uScroll);
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  let prog, loc = {}, texA, texB;
+
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  function makeTexture(){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([5, 5, 5, 255]));
+    return t;
+  }
+
+  if (gl) {
+    try {
+      prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      gl.useProgram(prog);
+
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const aPos = gl.getAttribLocation(prog, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      ['uTexA','uTexB','uMix','uTime','uPulse','uSeam','uScroll','uRes','uVidRes','uMouse','uRipple']
+        .forEach(n => loc[n] = gl.getUniformLocation(prog, n));
+
+      texA = makeTexture();
+      texB = makeTexture();
+      gl.uniform1i(loc.uTexA, 0);
+      gl.uniform1i(loc.uTexB, 1);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    } catch (e) {
+      useFallback();
+      prog = null;
+    }
+  }
+
+  /* ---------------- sizing ---------------- */
+  let W = 0, H = 0;
+  function resize(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const r = canvas.getBoundingClientRect();
+    W = Math.round(r.width * dpr);
+    H = Math.round(r.height * dpr);
+    canvas.width = W; canvas.height = H;
+    if (gl) gl.viewport(0, 0, W, H);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  /* ---------------- input: critically-damped springs (soft inertia, no wobble) ---------------- */
+  let tx = 0, ty = 0;       // target, -1..1
+  let mx = 0, my = 0;       // smoothed
+  let vxs = 0, vys = 0;     // spring velocities
+  const STIFF = 26, DAMP = 2 * Math.sqrt(STIFF) * 1.12; // slightly overdamped
+
+  hero.addEventListener('pointermove', e => {
+    if (isTouch) return;
+    const r = hero.getBoundingClientRect();
+    tx = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ty = ((e.clientY - r.top) / r.height) * 2 - 1;
+  });
+
+  /* ---------------- click pulse + ripples ---------------- */
+  const ripples = Array.from({ length: 5 }, () => ({ x: 0.5, y: 0.5, t: -10, s: 0 }));
+  let rippleIdx = 0;
+  let pulse = 0, kickScale = 0;
+
+  hero.addEventListener('pointerdown', e => {
+    if (reduced) return;
+    const r = hero.getBoundingClientRect();
+    const cx = (e.clientX - r.left) / r.width;
+    const cy = (e.clientY - r.top) / r.height;
+    // the pulse is born from the sphere (frame center) leaning toward the click
+    const rp = ripples[rippleIdx = (rippleIdx + 1) % ripples.length];
+    rp.x = 0.5 + (cx - 0.5) * 0.35;
+    rp.y = 0.47 + (cy - 0.47) * 0.35;
+    rp.t = now;
+    rp.s = 1;
+    pulse = Math.min(1, pulse + 0.9);
+    kickScale = 1;
+  });
+
+  /* ---------------- scroll immersion ---------------- */
+  // rises 0 → 1 across the first screenful of scrolling, then eases in the loop
+  let scrollTarget = 0, scrollProg = 0;
+  function onScroll(){
+    const h = hero.getBoundingClientRect().height || innerHeight;
+    scrollTarget = Math.min(1, Math.max(0, window.scrollY / (h * 0.85)));
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- render loop ---------------- */
+  const t0 = performance.now();
+  let last = t0, now = 0, running = true;
+  const rippleData = new Float32Array(20);
+
+  function uploadVideo(unit, tex, v){
+    // skip re-uploading identical frames while a video is paused
+    if (v.readyState >= 2 && (!v.paused || !v._uploaded)) {
+      gl.activeTexture(unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      try {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v);
+      } catch (e) {
+        // file:// pages mark the video cross-origin in some browsers —
+        // degrade to the plain videos with CSS parallax instead of a black hero
+        prog = null;
+        useFallback();
+        return;
+      }
+      v._uploaded = true;
+    }
+  }
+
+  function frame(ts){
+    if (!running) return;
+    requestAnimationFrame(frame);
+    const dt = Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+    now = (ts - t0) / 1000;
+
+    loopTick();
+
+    // springs
+    if (!reduced) {
+      vxs += ((tx - mx) * STIFF - vxs * DAMP) * dt;
+      vys += ((ty - my) * STIFF - vys * DAMP) * dt;
+      mx += vxs * dt;
+      my += vys * dt;
+      pulse *= Math.exp(-dt * 2.0);
+      kickScale *= Math.exp(-dt * 3.2);
+      scrollProg += (scrollTarget - scrollProg) * (1 - Math.exp(-dt * 7)); // soft catch-up
+    }
+
+    // CSS 3D camera + layered parallax (deeper tilt + scroll push-in)
+    if (!reduced) {
+      const bz = 1 + kickScale * 0.006 + scrollProg * 0.06;
+      const tz = scrollProg * 90; // pull the scene toward the viewer on scroll
+      scene.style.transform =
+        `perspective(1100px) translate3d(${(-mx * 20).toFixed(2)}px, ${(-my * 15).toFixed(2)}px, ${tz.toFixed(1)}px)` +
+        ` rotateY(${(mx * 3.4).toFixed(3)}deg) rotateX(${(-my * 2.6).toFixed(3)}deg)` +
+        ` scale(${bz.toFixed(4)})`;
+      glowBlue.style.transform = `translate3d(${(-mx * 34).toFixed(1)}px, ${(-my * 26).toFixed(1)}px, 0)`;
+      glowOr.style.transform   = `translate3d(${(-mx * 27).toFixed(1)}px, ${(-my * 20).toFixed(1)}px, 0)`;
+      partsEl.style.transform  = `translate3d(${(-mx * 50).toFixed(1)}px, ${(-my * 38).toFixed(1)}px, 0)`;
+      // fade the volumetric layers out with the video so the hero goes fully black
+      const layerFade = (1 - Math.min(1, Math.max(0, (scrollProg - 0.30) / 0.66))).toFixed(3);
+      glowBlue.style.opacity = glowOr.style.opacity = partsEl.style.opacity = layerFade;
+      // content drifts back and fades slightly as the video distortion takes over
+      content.style.transform  =
+        `translate3d(${(mx * 14).toFixed(2)}px, ${(my * 10).toFixed(2)}px, ${(-scrollProg * 60).toFixed(1)}px)` +
+        ` rotateY(${(-mx * 1.0).toFixed(3)}deg) rotateX(${(my * 0.8).toFixed(3)}deg)`;
+      content.style.opacity = Math.max(0, 1 - scrollProg * 1.25).toFixed(3);
+      scrollHint.style.opacity = (1 - scrollProg * 3).toFixed(3);
+    }
+
+    // no-WebGL mode: crossfade the loop seam via element opacity, plus a heavy
+    // blur/brightness distortion as the user scrolls in
+    if (fallbackMode) {
+      const fade = Math.min(1, Math.max(0, (scrollProg - 0.30) / 0.66));
+      vB.style.opacity = (dispMix * (1 - fade)).toFixed(3);
+      vA.style.opacity = (1 - fade).toFixed(3);
+      const blur = seam * 2.2 + scrollProg * 9;
+      const bright = (1 + seam * 0.05) * (1 - fade);
+      const contr = 1 + scrollProg * 0.25;
+      scene.style.filter = (blur > 0.01 || scrollProg > 0.01)
+        ? `blur(${blur.toFixed(2)}px) brightness(${bright.toFixed(3)}) contrast(${contr.toFixed(3)})`
+        : '';
+    }
+
+    // WebGL pass
+    if (gl && prog) {
+      uploadVideo(gl.TEXTURE0, texA, vA);
+      uploadVideo(gl.TEXTURE1, texB, vB);
+
+      gl.uniform1f(loc.uMix, dispMix);
+      gl.uniform1f(loc.uSeam, seam);
+      gl.uniform1f(loc.uScroll, reduced ? 0 : scrollProg);
+      gl.uniform1f(loc.uTime, now);
+      gl.uniform1f(loc.uPulse, reduced ? 0 : pulse);
+      gl.uniform2f(loc.uRes, W, H);
+      gl.uniform2f(loc.uVidRes, vA.videoWidth || 2134, vA.videoHeight || 1080);
+      gl.uniform2f(loc.uMouse, reduced ? 0 : mx, reduced ? 0 : my);
+      for (let i = 0; i < 5; i++) {
+        const r = ripples[i];
+        rippleData[i * 4] = r.x; rippleData[i * 4 + 1] = r.y;
+        rippleData[i * 4 + 2] = r.t; rippleData[i * 4 + 3] = r.s;
+      }
+      gl.uniform4fv(loc.uRipple, rippleData);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+  }
+  requestAnimationFrame(frame);
+
+  /* ---------------- lifecycle ---------------- */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      running = false;
+      vA.pause(); vB.pause();
+    } else {
+      running = true;
+      last = performance.now();
+      tryPlay(cur);
+      requestAnimationFrame(frame);
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="./image-slot.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  /* overflow-x:clip contains the oversized glows WITHOUT breaking the hero's
+     position:sticky (overflow-x:hidden would create a scroll container) */
+  body{margin:0;background:#050505;color:#fff;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', system-ui, sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip;}
+  a{color:#8fb6ff;text-decoration:none;transition:color .25s;}
+  a:hover{color:#005CFF;}
+  ::selection{background:rgba(0,92,255,.4);}
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-track{background:#050505;}
+  ::-webkit-scrollbar-thumb{background:rgba(0,92,255,.35);border-radius:9px;}
+  @keyframes liquid1{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(7%,-9%) scale(1.18);}66%{transform:translate(-6%,7%) scale(.92);}}
+  @keyframes liquid2{0%,100%{transform:translate(0,0) scale(1.05);}50%{transform:translate(-9%,9%) scale(1.22);}}
+  @keyframes liquid3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(8%,8%) scale(1.12);}}
+  @keyframes floatP{0%,100%{transform:translateY(0);opacity:.35;}50%{transform:translateY(-34px);opacity:.95;}}
+  @keyframes scrollDot{0%{transform:translateY(0);opacity:0;}25%{opacity:1;}100%{transform:translateY(16px);opacity:0;}}
+  @keyframes borderGlow{0%,100%{opacity:.55;}50%{opacity:1;}}
+  @keyframes barGrow{0%,100%{height:28%;}50%{height:92%;}}
+  @keyframes spinSlow{to{transform:rotate(360deg);}}
+  @keyframes pulseRing{0%{transform:scale(.85);opacity:.8;}100%{transform:scale(1.6);opacity:0;}}
+  image-slot{--is-bg:transparent;}
+</style>
+<style>
+  /* ===== FAVX cinematic hero — WebGL video + mouse 3D + scroll distortion ===== */
+  /* tall track: the hero stays pinned while scrolling so the distortion + fade
+     to black have room to play before the page continues */
+  #heroWrap{position:relative;height:190vh;}
+  #home{
+    position:sticky;top:0;
+    height:100vh;height:100svh;
+    overflow:hidden;
+    perspective:1100px;perspective-origin:50% 50%;
+    background:#050505;cursor:default;
+  }
+  #scene{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform;}
+  #gl, #home .vid{position:absolute;top:-6%;left:-6%;width:112%;height:112%;object-fit:cover;display:block;}
+  #home .vid{opacity:0;pointer-events:none;}
+  #home .vid.asFallback{opacity:1;}
+  #home .glow{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:screen;will-change:transform;}
+  #glowBlue{bottom:-22%;left:-14%;width:64vw;height:64vw;background:radial-gradient(circle at 40% 40%,rgba(0,92,255,.34),transparent 62%);filter:blur(90px);}
+  #glowOrange{top:-18%;right:-12%;width:52vw;height:52vw;background:radial-gradient(circle at 55% 45%,rgba(255,122,0,.20),transparent 60%);filter:blur(100px);}
+  #particles{position:absolute;inset:0;pointer-events:none;will-change:transform;}
+  #home .p{position:absolute;border-radius:50%;background:rgba(160,195,255,.85);box-shadow:0 0 8px rgba(0,92,255,.9);animation:heroDust ease-in-out infinite;opacity:0;}
+  @keyframes heroDust{0%,100%{transform:translateY(0) translateX(0);opacity:0;}12%{opacity:var(--o);}50%{transform:translateY(-46px) translateX(10px);opacity:var(--o);}88%{opacity:var(--o);}}
+  #shade{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at 50% 42%,rgba(5,5,5,0) 30%,rgba(5,5,5,.38) 100%),linear-gradient(180deg,rgba(5,5,5,.42) 0%,rgba(5,5,5,.10) 38%,rgba(5,5,5,.12) 62%,rgba(5,5,5,.60) 100%);}
+  #content{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 90px;transform-style:preserve-3d;will-change:transform;}
+  #home .badge{display:inline-flex;align-items:center;gap:9px;padding:8px 16px;margin-bottom:30px;border-radius:100px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(255,255,255,.85);}
+  #home .badge i{width:7px;height:7px;border-radius:50%;background:#005CFF;box-shadow:0 0 12px #005CFF;}
+  #home h1{font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,'Helvetica Neue',system-ui,sans-serif;font-weight:600;font-size:clamp(48px,8vw,104px);line-height:1.05;letter-spacing:-.022em;margin:0 0 26px;max-width:900px;text-wrap:balance;font-optical-sizing:auto;font-synthesis:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+  #home h1 .hl{background:linear-gradient(180deg,#eaf1ff,#7fa8ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 34px rgba(0,92,255,.7));}
+  #home .sub{max-width:640px;margin:0 auto 40px;font-size:clamp(17px,2vw,20px);line-height:1.6;color:rgba(255,255,255,.72);}
+  #home .cta{display:inline-flex;align-items:center;gap:11px;padding:19px 36px;border-radius:18px;background:linear-gradient(180deg,rgba(0,102,255,.95),rgba(0,58,190,.95));border:1px solid rgba(150,185,255,.55);color:#fff;font:inherit;font-weight:700;font-size:16.5px;cursor:pointer;box-shadow:0 14px 48px rgba(0,92,255,.55),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;}
+  #home .cta:hover{transform:scale(1.045) translateY(-2px);box-shadow:0 20px 70px rgba(0,92,255,.75),inset 0 1px 0 rgba(255,255,255,.45);}
+  #scroll{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  #scroll .mouse{width:26px;height:42px;border:1.5px solid rgba(255,255,255,.3);border-radius:16px;display:flex;justify-content:center;padding-top:8px;}
+  #scroll .dot{width:4px;height:8px;border-radius:4px;background:#005CFF;box-shadow:0 0 8px #005CFF;animation:heroScrollDot 1.8s ease-in-out infinite;}
+  #scroll span{font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.4);text-transform:uppercase;}
+  @keyframes heroScrollDot{0%{transform:translateY(0);opacity:0;}25%{opacity:1;}100%{transform:translateY(16px);opacity:0;}}
+  @media (prefers-reduced-motion:reduce){#home .p,#scroll .dot{animation:none;}}
+
+  /* ===== nav: auto-hide outside the hero ===== */
+  /* the centring transform lives here (not inline) so the hidden state can
+     extend it — an inline transform would win and silently block the slide */
+  #favxNav{transform:translateX(-50%);
+    transition:opacity .5s ease,transform .55s cubic-bezier(.2,.8,.2,1),filter .5s ease;
+    will-change:transform,opacity;}
+  #favxNav.is-hidden{opacity:0;filter:blur(7px);
+    transform:translateX(-50%) translateY(-160%) scale(.96);
+    pointer-events:none;}
+  /* soft gradient bloom that dissolves along with the bar */
+  #favxNav::after{content:"";position:absolute;inset:-30px -40px;z-index:-1;pointer-events:none;
+    border-radius:40px;opacity:0;transition:opacity .5s ease;
+    background:radial-gradient(60% 100% at 50% 0%,rgba(0,92,255,.28),transparent 70%);}
+  #favxNav.is-peeking::after{opacity:1;}
+  @media (prefers-reduced-motion:reduce){
+    #favxNav{transition:opacity .2s linear;}
+    #favxNav.is-hidden{filter:none;transform:translateX(-50%);}
+  }
+
+  /* ===== nav: liquid-glass sliding indicator ===== */
+  #navLinks .nav-link{position:relative;z-index:1;padding:7px 15px;border-radius:13px;color:rgba(255,255,255,.72);white-space:nowrap;transition:color .35s ease;}
+  #navLinks .nav-link:hover{color:rgba(255,255,255,.95);}
+  #navLinks .nav-link.active{color:#fff;}
+  #navPill{
+    position:absolute;left:0;top:50%;height:34px;width:0;
+    transform:translate(0,-50%);border-radius:13px;pointer-events:none;z-index:0;opacity:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.06) 60%,rgba(255,255,255,.10));
+    border:1px solid rgba(255,255,255,.30);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.6),
+      inset 0 -6px 12px rgba(120,170,255,.12),
+      inset 0 0 0 1px rgba(255,255,255,.04),
+      0 4px 16px rgba(0,0,0,.30),
+      0 0 18px rgba(0,92,255,.30);
+    backdrop-filter:blur(5px) saturate(1.6);-webkit-backdrop-filter:blur(5px) saturate(1.6);
+  }
+  /* specular sheen sliding across the glass bead */
+  #navPill::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.28) 48%,transparent 62%);
+    opacity:.7;
+  }
+  @media (prefers-reduced-motion:reduce){#navPill{transition:none !important;}}
+
+  /* ===== liquid glass cards: reflexo + animação abertura ===== */
+  [data-glow] { position: relative; }
+  [data-glow-layer] {
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,.3) 0%, transparent 40%);
+    opacity: 0;
+    mix-blend-mode: screen;
+  }
+  @keyframes glassReveal {
+    0% { opacity: 0; filter: blur(12px) brightness(0.7); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0) brightness(1); transform: scale(1); }
+  }
+  [data-glow].reveal-active {
+    animation: glassReveal .8s cubic-bezier(.34,.8,.5,1) forwards;
+  }
+  @media (prefers-reduced-motion:reduce) {
+    [data-glow].reveal-active { animation: none; opacity: 1; filter: none; transform: scale(1); }
+  }
+</style>
+<style>
+  /* ===== 2. planos ===== */
+  .pl-sec{position:relative;padding:92px 24px;max-width:1240px;margin:0 auto;}
+  .pl-glow{position:absolute;top:4%;left:50%;transform:translateX(-50%);width:70vw;height:44vw;
+    border-radius:50%;pointer-events:none;filter:blur(120px);
+    background:radial-gradient(circle,rgba(0,92,255,.16),transparent 65%);}
+  .pl-head{position:relative;text-align:center;max-width:780px;margin:0 auto 44px;}
+  .pl-eyebrow{font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#005CFF;margin-bottom:18px;}
+  .pl-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(30px,4.6vw,52px);line-height:1.06;letter-spacing:-.025em;margin:0 0 18px;text-wrap:balance;}
+  .pl-sub{font-size:17px;line-height:1.6;color:rgba(255,255,255,.66);margin:0;text-wrap:balance;}
+  .pl-sub b{color:#8fb6ff;font-weight:700;}
+
+  .pl-grid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch;}
+  .pl-card{position:relative;display:flex;flex-direction:column;
+    padding:30px 28px 26px;border-radius:26px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.1);
+    backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    box-shadow:0 30px 60px rgba(0,0,0,.4);
+    transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s,border-color .45s;}
+  .pl-card:hover{transform:scale(1.06) translateY(-8px);z-index:4;border-color:rgba(0,92,255,.45);box-shadow:0 46px 100px rgba(0,92,255,.34);}
+  .pl-card.is-featured{background:linear-gradient(180deg,rgba(0,92,255,.16),rgba(255,255,255,.02));
+    border-color:transparent;transform:scale(1.04);z-index:2;
+    box-shadow:0 46px 100px rgba(0,92,255,.38),inset 0 1px 0 rgba(255,255,255,.15);}
+  .pl-card.is-featured:hover{transform:scale(1.1) translateY(-8px);z-index:4;}
+  .pl-card.is-featured::before{content:"";position:absolute;inset:0;border-radius:26px;padding:1px;pointer-events:none;
+    background:linear-gradient(135deg,#005CFF,#FF7A00,#005CFF);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude;animation:borderGlow 3.5s ease-in-out infinite;}
+
+  .pl-badge{display:inline-flex;align-self:flex-start;align-items:center;padding:7px 15px;border-radius:100px;
+    font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.8);margin-bottom:18px;}
+  .pl-badge-hot{background:linear-gradient(90deg,#005CFF,#FF7A00);border-color:transparent;color:#fff;
+    box-shadow:0 8px 24px rgba(0,92,255,.5);}
+  .pl-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:25px;letter-spacing:-.02em;margin:0 0 8px;color:#fff;}
+  .pl-pitch{font-size:16.5px;font-weight:600;line-height:1.4;margin:0 0 14px;
+    background:linear-gradient(90deg,#eaf1ff,#7fa8ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .pl-for{font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.6);margin:0 0 20px;
+    padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.09);}
+
+  .pl-block{margin-bottom:16px;}
+  .pl-blabel{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.42);margin:0 0 10px;}
+  .pl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .pl-list li{position:relative;padding-left:26px;font-size:14.5px;line-height:1.45;color:rgba(255,255,255,.84);}
+  .pl-list li::before{content:"";position:absolute;left:0;top:6px;width:15px;height:9px;
+    border-left:2px solid #4b8bff;border-bottom:2px solid #4b8bff;transform:rotate(-45deg);}
+  .pl-gain li{color:rgba(255,255,255,.7);}
+  .pl-gain li::before{border-color:#FF9a3c;}
+
+  .pl-foot{margin-top:auto;padding-top:12px;display:flex;flex-direction:column;align-items:center;gap:11px;}
+  .pl-cta{display:block;width:100%;text-align:center;padding:16px 22px;border-radius:15px;
+    font-weight:700;font-size:15.5px;text-decoration:none;color:#fff;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),background .3s,box-shadow .3s;}
+  .pl-cta:hover{transform:translateY(-2px);background:rgba(0,92,255,.22);color:#fff;
+    box-shadow:0 14px 40px rgba(0,92,255,.42);}
+  .pl-cta-hot{background:linear-gradient(180deg,rgba(0,102,255,.98),rgba(0,58,190,.98));
+    border-color:rgba(150,185,255,.55);box-shadow:0 14px 44px rgba(0,92,255,.55),inset 0 1px 0 rgba(255,255,255,.35);}
+  .pl-cta-hot:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 20px 64px rgba(0,92,255,.8);}
+  .pl-trial{font-size:12px;letter-spacing:.04em;color:rgba(255,255,255,.45);}
+
+  @media (max-width:1080px){
+    .pl-grid{grid-template-columns:1fr;max-width:520px;margin:0 auto;gap:26px;}
+    .pl-card.is-featured{transform:none;order:-1;}
+    /* full-width column: a big scale would clip on the sides, so keep it gentle */
+    .pl-card:hover,.pl-card.is-featured:hover{transform:scale(1.02) translateY(-6px);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pl-card,.pl-cta{transition:none;}
+    .pl-card:hover,.pl-card.is-featured:hover{transform:none;}
+    .pl-card.is-featured::before{animation:none;}
+  }
+
+  /* ===== 5. rodapé ===== */
+  .ft{position:relative;padding:80px 24px 40px;max-width:1200px;margin:0 auto;
+    border-top:1px solid rgba(255,255,255,.08);}
+  .ft-inner{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start;justify-content:space-between;}
+  .ft-brand{max-width:330px;}
+  .ft-logo{height:38px;width:auto;display:block;margin-bottom:18px;
+    filter:drop-shadow(0 0 16px rgba(0,92,255,.45));}
+  .ft-tagline{font-size:15px;line-height:1.55;color:rgba(255,255,255,.62);margin:0;}
+  .ft-contact{display:flex;flex-wrap:wrap;gap:14px 40px;}
+  .ft-item{display:flex;align-items:center;gap:13px;text-decoration:none;color:#fff;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+  .ft-item:hover{transform:translateY(-2px);color:#fff;}
+  .ft-ico{flex:none;width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#8fb6ff;
+    transition:background .3s,border-color .3s,color .3s;}
+  .ft-item:hover .ft-ico{background:rgba(0,92,255,.22);border-color:rgba(0,92,255,.5);color:#fff;}
+  .ft-item span b{display:block;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(255,255,255,.42);margin-bottom:3px;}
+  .ft-item span{font-size:15px;color:rgba(255,255,255,.86);line-height:1.3;}
+  .ft-legal{margin:44px 0 0;padding-top:26px;border-top:1px solid rgba(255,255,255,.07);
+    font-size:13px;color:rgba(255,255,255,.38);}
+  @media (max-width:760px){
+    .ft-inner{flex-direction:column;gap:36px;}
+    .ft-contact{flex-direction:column;gap:18px;}
+  }
+
+  /* ===== IAs: Nexus Chat + Nexus Voice (premium) ===== */
+  #ias{position:relative;background:#09090B;padding:clamp(90px,12vh,150px) 24px;overflow:hidden;}
+  .ia-aura{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .ia-aura i{position:absolute;display:block;border-radius:50%;filter:blur(130px);}
+  .ia-aura .g1{top:-16%;left:-10%;width:52%;height:64%;background:radial-gradient(circle,rgba(0,92,255,.34),transparent 66%);}
+  .ia-aura .g2{top:8%;right:-12%;width:50%;height:66%;background:radial-gradient(circle,rgba(139,92,246,.32),transparent 64%);}
+  .ia-aura .g3{bottom:-24%;left:38%;width:46%;height:58%;background:radial-gradient(circle,rgba(88,60,220,.24),transparent 66%);}
+  .ia-wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;}
+
+  .ia-head{text-align:center;max-width:820px;margin:0 auto clamp(46px,6vh,72px);}
+  .ia-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:#a9b6ff;padding:7px 16px;border-radius:100px;margin-bottom:22px;
+    background:rgba(120,110,255,.1);border:1px solid rgba(140,130,255,.28);}
+  .ia-h2{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(32px,5.2vw,60px);line-height:1.03;letter-spacing:-.03em;margin:0 0 22px;text-wrap:balance;
+    background:linear-gradient(110deg,#ffffff 0%,#b9c6ff 42%,#c7b3ff 72%,#ffffff 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .ia-sub{font-size:clamp(16px,2vw,19px);line-height:1.6;color:rgba(255,255,255,.66);margin:0;text-wrap:balance;}
+
+  /* stacked, no card block behind the text — just content on the dark bg */
+  .ia-grid{display:grid;grid-template-columns:1fr;gap:0;}
+  .ia-card{position:relative;display:flex;flex-direction:column;
+    width:100%;max-width:900px;margin:0 auto;padding:clamp(40px,6vh,64px) 0;}
+  .ia-card + .ia-card{border-top:1px solid rgba(255,255,255,.09);}
+
+  /* Nexus Chat AI: two columns — text left, live chat right */
+  .ia-two{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(30px,4vw,60px);align-items:center;}
+  .ia-col-text{min-width:0;display:flex;flex-direction:column;}
+  .ia-col-media{min-width:0;display:flex;justify-content:center;align-items:center;}
+
+  /* live chat mockup — AI answering in real time */
+  .ia-chat{width:100%;max-width:400px;border-radius:28px;overflow:hidden;position:relative;
+    background:linear-gradient(180deg,rgba(12,16,34,.94),rgba(6,9,20,.96));
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 34px 90px rgba(0,0,0,.6),0 0 60px rgba(0,92,255,.12),inset 0 1px 0 rgba(255,255,255,.07);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+  .ia-chat::before{content:"";position:absolute;inset:0;border-radius:28px;padding:1px;pointer-events:none;z-index:2;
+    background:linear-gradient(140deg,rgba(0,92,255,.55),rgba(124,58,237,.4),transparent 62%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;}
+  .ia-chat-head{display:flex;align-items:center;gap:12px;padding:15px 17px;position:relative;z-index:1;
+    background:linear-gradient(120deg,rgba(0,92,255,.2),rgba(90,60,220,.14));
+    border-bottom:1px solid rgba(255,255,255,.08);}
+  .ia-chat-avatar{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-weight:800;font-size:17px;color:#fff;letter-spacing:.02em;
+    background:linear-gradient(135deg,#005CFF,#7c3aed);box-shadow:0 6px 18px rgba(0,92,255,.55);}
+  .ia-chat-id{display:flex;flex-direction:column;line-height:1.25;flex:1;min-width:0;}
+  .ia-chat-id b{font-size:15px;color:#fff;font-weight:700;}
+  .ia-chat-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5fe0a0;}
+  .ia-chat-status i{width:7px;height:7px;border-radius:50%;background:#33d17a;box-shadow:0 0 8px #33d17a;animation:iaBlink 1.6s ease-in-out infinite;}
+  .ia-chat-tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);flex:none;}
+  .ia-chat-body{position:relative;z-index:1;height:410px;padding:20px 15px;display:flex;flex-direction:column;gap:11px;justify-content:flex-end;
+    overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;
+    background:radial-gradient(120% 70% at 50% 0%,rgba(0,92,255,.07),transparent 62%);}
+  .ia-chat-body::-webkit-scrollbar{display:none;}
+  .ia-msg{max-width:82%;padding:11px 15px;border-radius:18px;font-size:13.5px;line-height:1.45;
+    opacity:0;transform:translateY(14px) scale(.96);transition:opacity .45s ease,transform .45s cubic-bezier(.2,.8,.2,1);}
+  .ia-msg.is-show{opacity:1;transform:none;}
+  .ia-msg.in{align-self:flex-start;background:rgba(255,255,255,.08);color:rgba(255,255,255,.92);
+    border:1px solid rgba(255,255,255,.06);border-bottom-left-radius:5px;}
+  .ia-msg.out{align-self:flex-end;color:#fff;border-bottom-right-radius:5px;
+    background:linear-gradient(135deg,#005CFF,#5b6bff);box-shadow:0 8px 26px rgba(0,92,255,.4);}
+  .ia-typing{align-self:flex-end;display:inline-flex;gap:5px;padding:14px 16px;border-radius:18px;border-bottom-right-radius:5px;
+    background:linear-gradient(135deg,rgba(0,92,255,.55),rgba(91,107,255,.55));
+    opacity:0;transform:translateY(14px) scale(.9);transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.2,1);}
+  .ia-typing.is-show{opacity:1;transform:none;}
+  .ia-typing span{width:7px;height:7px;border-radius:50%;background:#fff;animation:iaDot 1.15s infinite ease-in-out;}
+  .ia-typing span:nth-child(2){animation-delay:.18s;}
+  .ia-typing span:nth-child(3){animation-delay:.36s;}
+  @keyframes iaDot{0%,60%,100%{transform:translateY(0);opacity:.45;}30%{transform:translateY(-5px);opacity:1;}}
+
+  /* Nexus Voice AI: interactive neural sphere (canvas) */
+  .ia-neural{position:relative;width:100%;max-width:440px;aspect-ratio:1/1;margin:0 auto;}
+  .ia-neural::before{content:"";position:absolute;inset:-10%;pointer-events:none;z-index:0;filter:blur(30px);
+    background:radial-gradient(circle at 42% 40%,rgba(0,92,255,.22),transparent 58%),
+               radial-gradient(circle at 64% 62%,rgba(255,122,0,.15),transparent 58%),
+               radial-gradient(circle at 50% 55%,rgba(150,80,246,.18),transparent 60%);}
+  .ia-neural canvas{position:relative;z-index:1;width:100%;height:100%;display:block;}
+
+  .ia-badge{display:inline-flex;align-self:flex-start;align-items:center;gap:7px;padding:7px 15px;border-radius:100px;
+    font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px;}
+  .ia-clara .ia-badge{background:rgba(0,92,255,.14);border:1px solid rgba(0,92,255,.4);color:#8fb6ff;}
+  .ia-lana .ia-badge{background:linear-gradient(90deg,#8b5cf6,#ff5a8a);border:1px solid transparent;color:#fff;
+    box-shadow:0 8px 24px rgba(139,92,246,.5);animation:iaBadgePulse 2.6s ease-in-out infinite;}
+  @keyframes iaBadgePulse{0%,100%{box-shadow:0 8px 24px rgba(139,92,246,.5);}50%{box-shadow:0 8px 34px rgba(255,90,138,.7);}}
+
+  .ia-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(40px,5vw,58px);letter-spacing:-.03em;line-height:1;margin:0 0 8px;color:#fff;}
+  .ia-tagline{font-size:clamp(20px,2.6vw,26px);font-weight:700;line-height:1.2;margin:0 0 18px;
+    background:linear-gradient(90deg,#c9b3ff,#ff9ec2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .ia-desc{font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.68);margin:0 0 22px;}
+  .ia-desc b{color:#fff;font-weight:600;}
+
+  .ia-feats{list-style:none;margin:0 0 24px;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;}
+  .ia-feats li{position:relative;padding-left:24px;font-size:13.5px;line-height:1.4;color:rgba(255,255,255,.82);}
+  .ia-feats li::before{content:"";position:absolute;left:0;top:5px;width:13px;height:8px;transform:rotate(-45deg);
+    border-left:2px solid;border-bottom:2px solid;}
+  .ia-clara .ia-feats li::before{border-color:#4b8bff;}
+  .ia-lana .ia-feats li::before{border-color:#b98bff;}
+
+  .ia-hl{margin-top:auto;padding:16px 18px;border-radius:16px;font-size:13.5px;line-height:1.5;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.82);}
+  .ia-hl b{color:#fff;}
+  .ia-hl .ia-hl-tag{display:block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;}
+  .ia-clara .ia-hl-tag{color:#4b8bff;}
+  .ia-lana .ia-hl{background:linear-gradient(120deg,rgba(139,92,246,.14),rgba(255,90,138,.08));border-color:rgba(180,140,255,.28);
+    font-size:15px;font-style:italic;color:#fff;}
+
+  /* real dashboard screenshot + "prova real" heading */
+  .ia-proof{margin-top:clamp(34px,5vh,60px);}
+  .ia-proof-head{text-align:center;max-width:780px;margin:0 auto clamp(20px,3vh,32px);}
+  .ia-proof-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.2em;
+    text-transform:uppercase;color:#8fb6ff;margin-bottom:15px;padding:6px 15px;border-radius:100px;
+    background:rgba(0,92,255,.1);border:1px solid rgba(0,92,255,.28);}
+  .ia-proof-eyebrow i{width:7px;height:7px;border-radius:50%;background:#4b8bff;box-shadow:0 0 10px #005CFF;animation:iaBlink 1.6s ease-in-out infinite;}
+  .ia-proof-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(23px,3.6vw,40px);line-height:1.1;letter-spacing:-.025em;margin:0;color:#fff;text-wrap:balance;}
+  .ia-proof-accent{background:linear-gradient(100deg,#3d8bff,#a97bff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+
+  .ia-shot{position:relative;margin:0;padding:0;border-radius:18px;overflow:hidden;
+    background:rgba(4,8,22,.55);border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 24px 60px rgba(0,0,0,.5);}
+  /* scroll-triggered: light bloom (glow flare) around the frame */
+  .ia-shot.is-lit{animation:shotGlow 1.25s ease-out 1;}
+  @keyframes shotGlow{
+    0%{box-shadow:0 24px 60px rgba(0,0,0,.5);}
+    16%{box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 55px 4px rgba(0,120,255,.7),0 0 130px 28px rgba(124,58,237,.5);}
+    100%{box-shadow:0 24px 60px rgba(0,0,0,.5);}}
+  /* light sweep bar running down the frame */
+  .ia-shot::after{content:"";position:absolute;left:-10%;right:-10%;top:0;height:36%;z-index:4;pointer-events:none;opacity:0;
+    mix-blend-mode:screen;filter:blur(7px);
+    background:linear-gradient(180deg,transparent,rgba(140,190,255,.6) 55%,rgba(210,190,255,.88) 82%,transparent);}
+  .ia-shot.is-lit::after{animation:shotSweep 1s cubic-bezier(.4,0,.2,1) .06s 1;}
+  @keyframes shotSweep{0%{opacity:0;transform:translateY(-150%);}12%{opacity:.9;}86%{opacity:.55;}100%{opacity:0;transform:translateY(330%);}}
+  /* illuminated glitch on the dashboard image */
+  .ia-shot.is-lit img{animation:shotGlitch .74s steps(1,end) .05s 1;}
+  @keyframes shotGlitch{
+    0%{filter:none;transform:translateX(0);clip-path:inset(0 0 0 0);}
+    6%{filter:drop-shadow(3px 0 0 rgba(255,45,107,.9)) drop-shadow(-3px 0 0 rgba(0,230,255,.9)) brightness(1.18);transform:translateX(-2px);}
+    12%{filter:drop-shadow(-4px 0 0 rgba(255,45,107,.9)) drop-shadow(4px 0 0 rgba(0,230,255,.9)) brightness(1.26);transform:translateX(5px);clip-path:inset(14% 0 64% 0);}
+    18%{filter:brightness(1.32) drop-shadow(0 0 14px rgba(120,180,255,.85));transform:translateX(-5px);clip-path:inset(56% 0 20% 0);}
+    24%{filter:drop-shadow(3px 0 0 rgba(0,230,255,.9)) drop-shadow(-3px 0 0 rgba(255,45,107,.9)) brightness(1.15);transform:translateX(3px);clip-path:inset(0 0 0 0);}
+    32%{filter:brightness(1.12);transform:translateX(-3px);clip-path:inset(34% 0 42% 0);}
+    40%{filter:drop-shadow(-2px 0 0 rgba(255,45,107,.8)) drop-shadow(2px 0 0 rgba(0,230,255,.8)) brightness(1.12);transform:translateX(2px);clip-path:inset(0 0 0 0);}
+    55%{filter:brightness(1.06);transform:translateX(-1px);}
+    100%{filter:none;transform:translateX(0);clip-path:inset(0 0 0 0);}}
+  .ia-shot-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+  .ia-shot-top span{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);}
+  .ia-live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#4b8bff;}
+  .ia-live i{width:7px;height:7px;border-radius:50%;background:#4b8bff;box-shadow:0 0 8px #005CFF;animation:iaBlink 1.6s ease-in-out infinite;}
+  @keyframes iaBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .ia-shot img{display:block;width:100%;height:auto;}
+  .ia-shot figcaption{padding:12px 16px;font-size:11.5px;color:rgba(255,255,255,.46);
+    background:rgba(4,8,22,.55);border-top:1px solid rgba(255,255,255,.08);}
+
+  /* integration flow */
+  .ia-flow-sec{margin-top:clamp(48px,7vh,88px);text-align:center;}
+  .ia-flow-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(24px,3.6vw,42px);line-height:1.08;letter-spacing:-.025em;margin:0 0 clamp(34px,5vh,56px);text-wrap:balance;color:#fff;}
+  .ia-flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 10px;}
+  .ia-step{position:relative;padding:14px 22px;border-radius:100px;font-size:14.5px;font-weight:600;white-space:nowrap;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+  .ia-step.is-ai{font-weight:800;padding:15px 26px;}
+  .ia-step.s-clara{background:linear-gradient(120deg,rgba(0,92,255,.28),rgba(0,60,180,.16));border-color:rgba(0,92,255,.5);box-shadow:0 8px 30px rgba(0,92,255,.3);}
+  .ia-step.s-lana{background:linear-gradient(120deg,rgba(139,92,246,.3),rgba(90,40,180,.16));border-color:rgba(139,92,246,.5);box-shadow:0 8px 30px rgba(139,92,246,.32);}
+  .ia-step.s-win{background:linear-gradient(120deg,rgba(0,200,120,.28),rgba(0,120,80,.16));border-color:rgba(0,220,140,.5);color:#eafff4;box-shadow:0 8px 30px rgba(0,200,120,.3);}
+  .ia-arrow{width:34px;height:2px;position:relative;flex:none;
+    background:linear-gradient(90deg,rgba(120,150,255,.2),rgba(160,140,255,.7));
+    background-size:200% 100%;animation:iaFlow 2.2s linear infinite;}
+  .ia-arrow::after{content:"";position:absolute;right:-1px;top:50%;transform:translateY(-50%) rotate(45deg);width:7px;height:7px;
+    border-top:2px solid rgba(180,160,255,.8);border-right:2px solid rgba(180,160,255,.8);}
+  @keyframes iaFlow{0%{background-position:100% 0;}100%{background-position:-100% 0;}}
+
+  /* CTA */
+  .ia-cta-wrap{margin-top:clamp(48px,7vh,84px);text-align:center;}
+  .ia-cta{display:inline-flex;align-items:center;gap:12px;max-width:640px;padding:22px 40px;border-radius:20px;
+    font-weight:700;font-size:clamp(15px,2vw,18px);line-height:1.3;text-decoration:none;color:#fff;text-wrap:balance;
+    background:linear-gradient(120deg,#005CFF,#7c3aed);border:1px solid rgba(170,150,255,.5);
+    box-shadow:0 18px 60px rgba(80,60,220,.55),inset 0 1px 0 rgba(255,255,255,.3);
+    animation:iaPulse 2.8s ease-in-out infinite;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1);}
+  .ia-cta:hover{transform:scale(1.04) translateY(-2px);color:#fff;}
+  @keyframes iaPulse{0%,100%{box-shadow:0 18px 60px rgba(80,60,220,.5),inset 0 1px 0 rgba(255,255,255,.3);}
+    50%{box-shadow:0 22px 76px rgba(120,80,255,.75),inset 0 1px 0 rgba(255,255,255,.4);}}
+  .ia-cta-sub{margin:18px auto 0;max-width:520px;font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.6);}
+
+  /* entrance reveal (fade + slide) */
+  .ia-reveal{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1);}
+  .ia-reveal.is-in{opacity:1;transform:none;}
+  .ia-grid .ia-card:nth-child(2){transition-delay:.12s;}
+
+  @media (max-width:880px){
+    .ia-two{grid-template-columns:1fr;gap:clamp(30px,5vh,44px);}
+    .ia-chat-body{height:360px;}
+    .ia-feats{grid-template-columns:1fr;}
+    .ia-flow{flex-direction:column;}
+    .ia-arrow{width:2px;height:26px;background:linear-gradient(180deg,rgba(120,150,255,.2),rgba(160,140,255,.7));background-size:100% 200%;animation:iaFlowV 2.2s linear infinite;}
+    .ia-arrow::after{right:50%;top:auto;bottom:-1px;transform:translateX(50%) rotate(135deg);}
+  }
+  @keyframes iaFlowV{0%{background-position:0 100%;}100%{background-position:0 -100%;}}
+  @media (prefers-reduced-motion:reduce){
+    .ia-reveal{opacity:1;transform:none;transition:none;}
+    .ia-badge,.ia-cta,.ia-arrow,.ia-live i,.ia-chat-status i,.ia-typing span,.ia-proof-eyebrow i,
+    .ia-shot.is-lit,.ia-shot.is-lit::after,.ia-shot.is-lit img{animation:none;}
+    .ia-msg,.ia-typing{transition:none;}
+    .ia-card:hover{transform:none;}
+  }
+
+  /* ===== clients: scroll-pinned stage ===== */
+  /* tall track = how much scrolling happens while the section stays pinned */
+  #clientsTrack{position:relative;height:175vh;}
+  #clients{position:sticky;top:0;height:100vh;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;padding:0 24px;}
+  .cli-inner{position:relative;z-index:1;width:100%;max-width:1200px;margin:0 auto;}
+  /* gradient blobs that bloom in and are wiped away on exit */
+  .cli-aura{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .cli-aura i{position:absolute;display:block;border-radius:50%;filter:blur(110px);}
+  .cli-aura .a1{top:-24%;left:-14%;width:60%;height:70%;background:radial-gradient(circle,rgba(0,92,255,.42),transparent 65%);}
+  .cli-aura .a2{bottom:-30%;right:-12%;width:52%;height:66%;background:radial-gradient(circle,rgba(255,122,0,.3),transparent 62%);}
+  .cli-aura .a3{top:22%;left:38%;width:40%;height:52%;background:radial-gradient(circle,rgba(122,92,255,.28),transparent 64%);}
+
+  .cli-head{text-align:center;max-width:820px;margin:0 auto;
+    will-change:transform,opacity;transform-origin:50% 0;}
+  .cli-eyebrow{font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#005CFF;margin-bottom:clamp(8px,1.5vh,18px);}
+  .cli-title{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(30px,4.6vw,54px);line-height:1.05;letter-spacing:-.025em;
+    margin:0 0 clamp(10px,1.6vh,20px);text-wrap:balance;
+    background:linear-gradient(100deg,#ffffff 0%,#a8c8ff 26%,#FF9a3c 48%,#ffffff 72%,#a8c8ff 100%);
+    background-size:260% 100%;background-position:100% 50%;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .cli-sub{font-size:clamp(15px,1.7vw,18px);line-height:1.6;color:rgba(255,255,255,.65);margin:0;text-wrap:balance;}
+
+  .cli-stack{margin-top:clamp(20px,3.2vh,48px);will-change:transform,opacity;}
+
+  /* ===== client project carousel ===== */
+  .cli-carousel{--cli-w:min(400px,74vw);position:relative;}
+  /* 3D scene: perspective lives on the viewport, depth on the stage */
+  .cli-viewport{perspective:1500px;perspective-origin:50% 50%;}
+  .cli-stage{position:relative;height:clamp(390px,58vh,520px);transform-style:preserve-3d;
+    touch-action:pan-y;cursor:grab;}
+  .cli-stage.is-dragging{cursor:grabbing;}
+  .cli-stage.is-dragging .cli-card{transition:none;}
+
+  .cli-card{--neon:4px;--glow:0,92,255;
+    position:absolute;top:0;left:50%;width:var(--cli-w);height:100%;
+    margin-left:calc(var(--cli-w) / -2);
+    border-radius:28px;overflow:hidden;display:flex;flex-direction:column;
+    /* solid-ish tint instead of backdrop-filter: the page behind is flat dark,
+       so a live blur here cost a lot and showed almost nothing */
+    background:linear-gradient(180deg,rgba(20,26,42,.72),rgba(10,14,26,.78));
+    border:1px solid transparent;
+    box-shadow:0 24px 60px rgba(0,0,0,.45),
+               0 0 34px rgba(var(--glow),.5),
+               0 0 78px rgba(var(--glow),.26);
+    cursor:pointer;will-change:transform;
+    transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .7s ease,box-shadow .55s;}
+  .cli-card.is-active{cursor:default;}
+  /* JS writes the 3D transform inline, so hover only touches the glow —
+     a transform here would be overridden and silently do nothing */
+  .cli-card.is-active:hover,.cli-card.is-active:focus-within{
+    box-shadow:0 36px 84px rgba(0,0,0,.5),
+               0 0 46px rgba(var(--glow),.75),
+               0 0 105px rgba(var(--glow),.4);}
+  /* static fallback positions so the ring still reads as a carousel without JS */
+  .cli-card:nth-child(1){transform:translate3d(0,0,0);z-index:3;}
+  .cli-card:nth-child(2){transform:translate3d(62%,0,-280px) rotateY(-42deg);opacity:.45;z-index:2;}
+  .cli-card:nth-child(3){transform:translate3d(-62%,0,-280px) rotateY(42deg);opacity:.45;z-index:2;}
+
+  /* arrows */
+  .cli-nav{position:absolute;top:50%;z-index:5;
+    width:52px;height:52px;border-radius:50%;padding:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04)),rgba(10,14,26,.72);
+    border:1px solid rgba(255,255,255,.18);color:#fff;cursor:pointer;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:0 10px 30px rgba(0,0,0,.55);
+    transform:translateY(-50%);
+    transition:background .3s,transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s;}
+  .cli-nav:hover:not(:disabled){transform:translateY(-50%) scale(1.1);
+    background:linear-gradient(180deg,rgba(0,92,255,.45),rgba(0,58,190,.4)),rgba(10,14,26,.72);
+    border-color:rgba(0,92,255,.6);box-shadow:0 12px 36px rgba(0,92,255,.45);}
+  .cli-prev{left:-8px;}
+  .cli-next{right:-8px;}
+
+  /* dots */
+  .cli-dots{display:flex;justify-content:center;gap:11px;margin-top:clamp(18px,2.6vh,36px);}
+  .cli-dot{width:9px;height:9px;border-radius:50%;padding:0;border:none;cursor:pointer;
+    background:rgba(255,255,255,.22);
+    transition:background .3s,transform .3s,box-shadow .3s;}
+  .cli-dot.is-on{background:#005CFF;box-shadow:0 0 12px #005CFF;transform:scale(1.3);}
+
+  /* Static bloom halo. Blurred once and cached by the compositor — it never
+     animates, so its cost is paid a single time instead of every frame. */
+  .cli-card::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:calc(var(--neon) + 2px);
+    background:linear-gradient(115deg,#4b8bff,#ffffff 26%,#ffb066 55%,#c9b6ff 78%,#4b8bff);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude;
+    filter:blur(7px);opacity:.85;
+    pointer-events:none;z-index:2;}
+
+  /* Travelling ring. Only transform animates, so the gradient is rasterised
+     once and the GPU just slides it — no per-frame repaint or filter pass. */
+  .cli-ring{position:absolute;inset:0;border-radius:inherit;padding:var(--neon);overflow:hidden;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude;
+    pointer-events:none;z-index:3;}
+  .cli-ring::before{content:"";position:absolute;top:0;left:0;height:100%;width:300%;
+    /* one full colour cycle every 33.333% so the slide loops seamlessly */
+    background:repeating-linear-gradient(90deg,
+      #4b8bff 0%,#a8c8ff 3%,#ffffff 7%,#c9b6ff 11%,
+      #ffb066 16%,#fff0dc 20%,#ffb066 24%,
+      #c9b6ff 28%,#a8c8ff 31%,#4b8bff 33.333%);
+    animation:cliNeon 14s linear infinite;
+    will-change:transform;}
+  @keyframes cliNeon{from{transform:translate3d(0,0,0);}to{transform:translate3d(-33.3333%,0,0);}}
+  /* negative delays desync the cards; --glow tints each halo differently */
+  .cli-card:nth-child(2){--glow:122,92,255;}
+  .cli-card:nth-child(3){--glow:255,122,0;}
+  .cli-card:nth-child(2) .cli-ring::before{animation-delay:-4.6s;}
+  .cli-card:nth-child(3) .cli-ring::before{animation-delay:-9.3s;}
+
+  .cli-media{position:relative;flex:1;min-height:0;
+    filter:grayscale(1) brightness(1.4) opacity(.55);
+    transition:filter .55s ease,transform .55s cubic-bezier(.2,.8,.2,1);}
+  .cli-card.is-active:hover .cli-media,.cli-card.is-active:focus-within .cli-media{filter:grayscale(0) opacity(1);transform:scale(1.06);}
+  /* cover artwork fills the block edge to edge (logos keep the faded treatment) */
+  .cli-media.has-img{filter:none;opacity:.92;}
+  .cli-card.is-active:hover .cli-media.has-img,.cli-card.is-active:focus-within .cli-media.has-img{filter:none;opacity:1;}
+  .cli-media.has-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* persistent title over the artwork; hands off to the curtain on hover */
+  .cli-label{position:absolute;left:0;right:0;bottom:0;z-index:1;pointer-events:none;
+    padding:64px 26px 26px;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:700;font-size:19px;line-height:1.25;letter-spacing:-.01em;color:#fff;
+    text-wrap:balance;text-shadow:0 2px 14px rgba(0,0,0,.75);
+    background:linear-gradient(180deg,transparent,rgba(4,8,20,.5) 45%,rgba(4,8,20,.88));
+    transition:opacity .4s ease,transform .5s cubic-bezier(.2,.8,.2,1);}
+  .cli-card.is-active:hover .cli-label,.cli-card.is-active:focus-within .cli-label{opacity:0;transform:translateY(10px);}
+
+  /* frosted curtain: rises over the whole card and blurs the logo behind it */
+  .cli-info{position:absolute;inset:0;z-index:2;padding:30px;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    background:linear-gradient(180deg,rgba(4,8,20,.16),rgba(4,10,28,.5));
+    backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);
+    border-top:1px solid rgba(255,255,255,.16);
+    transform:translateY(100%);
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);
+    content-visibility:auto;}   /* skip rendering work while it is off-card */
+  .cli-card.is-active:hover .cli-info,.cli-card.is-active:focus-within .cli-info{transform:translateY(0);}
+  .cli-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8fb6ff;margin-bottom:7px;}
+  .cli-name{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro','SF Pro Text',system-ui,sans-serif;
+    font-weight:700;font-size:20px;line-height:1.22;margin:0;color:#fff;letter-spacing:-.01em;text-wrap:balance;}
+  .cli-detail{opacity:0;transform:translateY(12px);transition:opacity .45s ease .18s,transform .45s cubic-bezier(.2,.8,.2,1) .18s;}
+  .cli-card.is-active:hover .cli-detail,.cli-card.is-active:focus-within .cli-detail{opacity:1;transform:none;}
+  .cli-detail p{font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.72);margin:14px 0 16px;}
+  .cli-stats{list-style:none;margin:0;padding:0;display:flex;gap:26px;}
+  .cli-stats li{display:flex;flex-direction:column;gap:2px;}
+  .cli-stats strong{font-size:20px;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(90deg,#4b8bff,#FF7A00);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .cli-stats span{font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.5);}
+
+  /* touch devices have no hover: show everything up front */
+  @media (hover:none){
+    .cli-info{position:relative;inset:auto;transform:none;padding:24px;
+      background:rgba(4,8,20,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+    .cli-detail{opacity:1;transform:none;}
+    .cli-media{filter:grayscale(0) opacity(1);min-height:210px;}
+    .cli-label{display:none;}   /* the open curtain already shows the name */
+  }
+  @media (max-width:900px){
+    .cli-stage{height:clamp(340px,50vh,470px);}
+    .cli-nav{width:44px;height:44px;}
+    .cli-prev{left:-10px;}
+    .cli-next{right:-10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cli-card,.cli-media,.cli-info,.cli-detail{transition:none;}
+    .cli-card.is-active:hover{transform:scale(1);}
+    .cli-card.is-active:hover .cli-media{transform:none;}
+    .cli-detail{transform:none;}
+    .cli-card::after{animation:none;}   /* ring stays, just stops travelling */
+  }
+
+  /* ===== boot loader ===== */
+  #favx-loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:32px;background:#050505;
+    transition:opacity .6s ease,visibility .6s;}
+  #favx-loader.is-done{opacity:0;visibility:hidden;pointer-events:none;}
+  #favx-loader .logo{width:min(40vw,180px);height:auto;display:block;
+    filter:drop-shadow(0 0 46px rgba(0,92,255,.55));
+    animation:favxLoaderPulse 2.4s ease-in-out infinite;}
+  @keyframes favxLoaderPulse{0%,100%{transform:scale(1);opacity:.9;}50%{transform:scale(1.05);opacity:1;}}
+  #favx-loader .bar{position:relative;width:min(74vw,320px);height:4px;border-radius:100px;
+    background:rgba(255,255,255,.09);overflow:hidden;}
+  /* full-width gradient revealed by clip-path, so blue->orange always spans the whole track */
+  #favx-loader .fill{position:absolute;inset:0;border-radius:inherit;
+    background:linear-gradient(90deg,#005CFF 0%,#2f6fff 42%,#FF7A00 100%);
+    box-shadow:0 0 18px rgba(0,92,255,.55);
+    clip-path:inset(0 100% 0 0);transition:clip-path .25s ease-out;}
+  #favx-loader .pct{font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:rgba(255,255,255,.42);font-variant-numeric:tabular-nums;}
+  @media (prefers-reduced-motion:reduce){
+    #favx-loader .logo{animation:none;}
+    #favx-loader .fill{transition:none;}
+  }
+</style>
+</helmet>
+
+<!-- ============ BOOT LOADER ============ -->
+<noscript><style>#favx-loader{display:none!important}</style></noscript>
+<div id="favx-loader" role="progressbar" aria-label="Carregando" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <img class="logo" src="./assets/img/fx-logo.png" alt="FAVX" width="547" height="342" />
+  <div class="bar"><div class="fill"></div></div>
+  <div class="pct">0%</div>
+</div>
+
+<div id="favx-root" style="position:relative;width:100%;overflow:clip;background:#050505;">
+
+<!-- ============ NAV ============ -->
+<nav id="favxNav" style="position:fixed;top:18px;left:50%;z-index:100;display:flex;align-items:center;gap:36px;padding:12px 14px 12px 26px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03)),rgba(16,16,20,.45);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(26px) saturate(1.7);-webkit-backdrop-filter:blur(26px) saturate(1.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -8px 20px rgba(255,255,255,.04),0 12px 44px rgba(0,0,0,.5);max-width:calc(100% - 32px);">
+  <a href="#home" aria-label="FAVX — início" style="display:flex;align-items:center;flex:none;"><img src="./assets/img/fx-logo.png" alt="FAVX" width="547" height="342" style="height:30px;width:auto;display:block;filter:drop-shadow(0 0 14px rgba(0,92,255,.45));" /></a>
+  <div id="navLinks" style="position:relative;display:flex;align-items:center;gap:4px;font-size:14.5px;font-weight:500;">
+    <span id="navPill" aria-hidden="true"></span>
+    <a href="#home" class="nav-link">Início</a>
+    <a href="#pricing" class="nav-link">Planos</a>
+    <a href="#ias" class="nav-link">IAs</a>
+    <a href="#clients" class="nav-link">Clientes</a>
+    <a href="#contact" class="nav-link">Contato</a>
+  </div>
+  <a href="#pricing" style="display:inline-flex;align-items:center;padding:10px 20px;border-radius:14px;background:linear-gradient(180deg,rgba(0,92,255,.95),rgba(0,58,190,.95));border:1px solid rgba(140,180,255,.55);color:#fff;font-weight:700;font-size:14px;box-shadow:0 6px 22px rgba(0,92,255,.5),inset 0 1px 0 rgba(255,255,255,.35);" style-hover="color:#fff;">Teste 7 dias grátis</a>
+</nav>
+
+<!-- ============ HERO (cinematic WebGL video) ============ -->
+<div id="heroWrap">
+<section id="home">
+  <div id="scene">
+    <video id="vA" class="vid" src="./assets/video/0717-web.mp4" muted loop playsinline preload="auto"></video>
+    <canvas id="gl"></canvas>
+  </div>
+  <div class="glow" id="glowBlue"></div>
+  <div class="glow" id="glowOrange"></div>
+  <div id="particles"></div>
+  <div id="shade"></div>
+
+  <div id="content">
+    <div class="badge"><i></i>O Futuro da IA Comercial</div>
+    <h1>Cresça Sem <span class="hl">Limites</span>.</h1>
+    <p class="sub">A FAVX transforma sua operação comercial com Inteligência Artificial que automatiza conversas, qualifica leads, aumenta as vendas e ajuda o seu negócio a escalar sem limites.</p>
+    <a class="cta" href="#pricing">
+      Teste a FAVX por 7 dias
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+
+  <div id="scroll">
+    <div class="mouse"><span class="dot"></span></div>
+    <span>Rolar</span>
+  </div>
+</section>
+</div>
+
+<!-- ============ 2. PLANOS ============ -->
+<section id="pricing" class="pl-sec">
+  <div class="pl-glow" aria-hidden="true"></div>
+  <div class="pl-head">
+    <div class="pl-eyebrow">Planos FAVX</div>
+    <h2 class="pl-title">Escolha o plano certo para a sua operação comercial.</h2>
+    <p class="pl-sub">Todos os planos incluem <b>teste grátis por 7 dias</b>. Antes de qualquer proposta, entendemos o seu cenário.</p>
+  </div>
+
+  <div class="pl-grid">
+
+    <!-- Plano 1 -->
+    <article class="pl-card">
+      <span class="pl-badge">Ideal para começar</span>
+      <h3 class="pl-name">Plano Nexus Chat AI</h3>
+      <p class="pl-pitch">Pare de perder leads no WhatsApp.</p>
+      <p class="pl-for">Para quem recebe mensagens todo dia e perde vendas por demora no atendimento.</p>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Inclui</h4>
+        <ul class="pl-list">
+          <li>Atendimento no WhatsApp 24h</li>
+          <li>IA humanizada e qualificação de leads</li>
+          <li>Follow-ups automáticos</li>
+          <li>Integração com agenda</li>
+        </ul>
+      </div>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Resultado</h4>
+        <ul class="pl-list pl-gain">
+          <li>Respostas mais rápidas</li>
+          <li>Menos leads perdidos</li>
+          <li>Mais oportunidades qualificadas</li>
+        </ul>
+      </div>
+
+      <div class="pl-foot">
+        <a href="#contact" class="pl-cta">Teste a FAVX por 7 dias</a>
+        <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
+      </div>
+    </article>
+
+    <!-- Plano 2 — destaque -->
+    <article class="pl-card is-featured">
+      <span class="pl-badge pl-badge-hot">Mais recomendado</span>
+      <h3 class="pl-name">Plano Plus</h3>
+      <p class="pl-pitch">Uma plataforma para controlar leads e IA.</p>
+      <p class="pl-for">Para quem já recebe leads e quer gerir vendas e IA num só lugar, com visão completa da operação.</p>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Inclui</h4>
+        <ul class="pl-list">
+          <li>Tudo do Plano Nexus Chat AI</li>
+          <li>Plataforma de gestão de leads e IA</li>
+          <li>Dashboards e funis de vendas</li>
+          <li>Pipeline comercial organizado</li>
+          <li>Relatórios de desempenho em tempo real</li>
+        </ul>
+      </div>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Resultado</h4>
+        <ul class="pl-list pl-gain">
+          <li>Leads organizados em um só lugar</li>
+          <li>Acompanhamento de cada oportunidade</li>
+          <li>Decisões baseadas em dados</li>
+        </ul>
+      </div>
+
+      <div class="pl-foot">
+        <a href="#contact" class="pl-cta pl-cta-hot">Teste a FAVX por 7 dias</a>
+        <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
+      </div>
+    </article>
+
+    <!-- Plano 3 -->
+    <article class="pl-card">
+      <span class="pl-badge">Solução completa</span>
+      <h3 class="pl-name">Plano MAX</h3>
+      <p class="pl-pitch">Automatize, escale e venda mais.</p>
+      <p class="pl-for">Para quem quer uma operação avançada e escalável de ponta a ponta.</p>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Inclui</h4>
+        <ul class="pl-list">
+          <li>Tudo do Plano Plus</li>
+          <li>Nexus Voice AI e ligações automáticas</li>
+          <li>Qualificação e agendamento</li>
+          <li>Suporte 12h exclusivo</li>
+          <li>Acesso antecipado a tecnologias FAVX</li>
+        </ul>
+      </div>
+
+      <div class="pl-block">
+        <h4 class="pl-blabel">Resultado</h4>
+        <ul class="pl-list pl-gain">
+          <li>Operação comercial completa</li>
+          <li>Menos tarefas manuais</li>
+          <li>Escala sem aumentar equipe</li>
+        </ul>
+      </div>
+
+      <div class="pl-foot">
+        <a href="#contact" class="pl-cta">Teste a FAVX por 7 dias</a>
+        <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============ 3. IAs — Nexus Chat + Nexus Voice ============ -->
+<section id="ias">
+  <div class="ia-aura" aria-hidden="true"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
+  <div class="ia-wrap">
+
+    <div class="ia-head ia-reveal">
+      <div class="ia-eyebrow">Inteligência Artificial FAVX</div>
+      <h2 class="ia-h2">Conheça as IAs que estão revolucionando as vendas</h2>
+      <p class="ia-sub">Duas inteligências artificiais treinadas para vender, atender clientes e automatizar todo o processo comercial da sua empresa 24 horas por dia.</p>
+    </div>
+
+    <div class="ia-grid">
+
+      <!-- Nexus Chat AI -->
+      <article class="ia-card ia-clara ia-reveal">
+        <div class="ia-two">
+          <div class="ia-col-text">
+            <span class="ia-badge">Especialista em Atendimento Comercial</span>
+            <h3 class="ia-name">Nexus Chat AI</h3>
+            <p class="ia-desc">A <b>Nexus Chat AI</b> é uma Inteligência Artificial treinada com metodologias comerciais validadas por especialistas de alta performance. Ela domina técnicas de atendimento, estratégias de vendas e prospecção inteligente para conduzir cada conversa com naturalidade, contexto e foco em resultado.</p>
+            <p class="ia-desc">Atua de forma <b>totalmente autônoma</b>, 24 horas por dia, em todos os canais de contato: responde clientes, entende a intenção de cada lead, contorna objeções e avança a negociação até o momento certo de agendar ou fechar. Entre suas capacidades:</p>
+            <ul class="ia-feats">
+              <li>Atendimento comercial humanizado</li>
+              <li>Prospecção ativa e passiva</li>
+              <li>Qualificação automática de leads</li>
+              <li>Follow-up inteligente e contínuo</li>
+              <li>Contorno de objeções em tempo real</li>
+              <li>Agendamento de reuniões</li>
+              <li>Recuperação de oportunidades frias</li>
+              <li>Estratégias comerciais baseadas em IA</li>
+            </ul>
+            <p class="ia-desc">Na prática, a Nexus Chat AI garante que <b>nenhum lead fique sem resposta</b> — transformando cada mensagem recebida em uma oportunidade real de venda, sem depender de horário, escala de equipe ou intervenção manual.</p>
+          </div>
+
+          <div class="ia-col-media">
+            <div class="ia-chat" role="img" aria-label="Exemplo de atendimento automático da Nexus Chat AI respondendo um cliente no WhatsApp">
+              <div class="ia-chat-head">
+                <span class="ia-chat-avatar">N</span>
+                <div class="ia-chat-id">
+                  <b>Nexus Chat AI</b>
+                  <span class="ia-chat-status"><i></i>online agora</span>
+                </div>
+                <span class="ia-chat-tag">WhatsApp</span>
+              </div>
+              <div class="ia-chat-body" id="claraChat" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ia-proof">
+          <div class="ia-proof-head">
+            <span class="ia-proof-eyebrow"><i></i>Caso real · DSX</span>
+            <h4 class="ia-proof-title">O que a tecnologia Nexus entrega em apenas <span class="ia-proof-accent">7 dias</span></h4>
+          </div>
+          <figure class="ia-shot">
+            <div class="ia-shot-top">
+              <span>Resultados Reais</span>
+              <span class="ia-live"><i></i>DSX · 7 dias</span>
+            </div>
+            <img src="./assets/img/dashboard-clara-dsx.jpg" alt="Dashboard da Nexus Chat AI no DSX: 58 leads qualificados, 51 em negociação, 5 vendidos, R$ 4,29 mil" width="1400" height="824" loading="lazy" />
+            <figcaption>Resultados obtidos pela Nexus Chat AI do DSX em apenas 7 dias.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <!-- Nexus Voice AI -->
+      <article class="ia-card ia-lana ia-reveal">
+        <div class="ia-two ia-two-rev">
+          <div class="ia-col-text">
+            <span class="ia-badge">🔥 Novidade</span>
+            <h3 class="ia-name">Nexus Voice AI</h3>
+            <p class="ia-tagline">Sua IA agora também fala.</p>
+            <p class="ia-desc">A <b>Nexus Voice AI</b> utiliza voz natural e inteligência artificial para realizar atendimentos completos, aplicar estratégias comerciais e conduzir negociações em tempo real. Ela executa:</p>
+            <ul class="ia-feats">
+              <li>Atendimento por voz</li>
+              <li>Prospecção ativa por voz</li>
+              <li>Prospecção passiva</li>
+              <li>Qualificação de leads</li>
+              <li>Follow-up automático</li>
+              <li>Negociação comercial</li>
+              <li>Agendamento automático</li>
+              <li>Conversas humanizadas</li>
+            </ul>
+
+            <div class="ia-hl">
+              <span class="ia-hl-tag">Voz natural</span>
+              &ldquo;Conversas naturais que parecem realizadas por um vendedor humano.&rdquo;
+            </div>
+          </div>
+
+          <div class="ia-col-media">
+            <div class="ia-neural" aria-hidden="true">
+              <canvas id="voiceNeural"></canvas>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Integração -->
+    <div class="ia-flow-sec ia-reveal">
+      <h3 class="ia-flow-title">Duas especialistas. Uma única missão: vender mais.</h3>
+      <div class="ia-flow">
+        <span class="ia-step is-ai s-clara">Nexus Chat AI</span>
+        <span class="ia-arrow"></span>
+        <span class="ia-step">Qualifica Leads</span>
+        <span class="ia-arrow"></span>
+        <span class="ia-step is-ai s-lana">Nexus Voice AI</span>
+        <span class="ia-arrow"></span>
+        <span class="ia-step">Conversa por Voz</span>
+        <span class="ia-arrow"></span>
+        <span class="ia-step">Negociação</span>
+        <span class="ia-arrow"></span>
+        <span class="ia-step s-win">Venda</span>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="ia-cta-wrap ia-reveal">
+      <a href="#pricing" class="ia-cta">Quero colocar a Nexus Chat AI e a Nexus Voice AI para venderem pela minha empresa</a>
+      <p class="ia-cta-sub">Comece hoje e automatize seu atendimento comercial com Inteligência Artificial.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 4. CLIENTES ============ -->
+<div id="clientsTrack">
+<section id="clients">
+  <div class="cli-aura" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+  <div class="cli-inner">
+  <div class="cli-head">
+    <div class="cli-eyebrow">Prova social</div>
+    <h2 class="cli-title">Clientes que escolheram a FAVX para escalar.</h2>
+    <p class="cli-sub">Empresas que usam a FAVX para vender mais, organizar leads e escalar a operação comercial.</p>
+  </div>
+  <div class="cli-stack">
+  <div class="cli-carousel">
+    <button type="button" class="cli-nav cli-prev" aria-label="Cliente anterior">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="cli-nav cli-next" aria-label="Próximo cliente">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="cli-viewport">
+      <div class="cli-stage">
+    <article class="cli-card">
+      <span class="cli-ring" aria-hidden="true"></span>
+      <div class="cli-media has-img"><img src="./assets/img/dsx-cover.jpg" alt="DSX — Digital Summit Experience" width="335" height="597" loading="lazy" /></div>
+      <span class="cli-label">DSX &mdash; Digital Summit Experience</span>
+      <div class="cli-info">
+        <span class="cli-tag">Evento</span>
+        <h3 class="cli-name">DSX &mdash; Digital Summit Experience</h3>
+        <div class="cli-detail">
+          <p>Implantação da Nexus Chat AI no WhatsApp para qualificar leads e recuperar carrinhos abandonados 24h por dia.</p>
+          <ul class="cli-stats">
+            <li><strong>+240%</strong><span>Conversão</span></li>
+            <li><strong>-58%</strong><span>Custo por lead</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="cli-card">
+      <span class="cli-ring" aria-hidden="true"></span>
+      <div class="cli-media has-img"><img src="./assets/img/maivor-cover.jpg" alt="Maivor" width="900" height="1600" loading="lazy" /></div>
+      <span class="cli-label">Maivor</span>
+      <div class="cli-info">
+        <span class="cli-tag">Marketing</span>
+        <h3 class="cli-name">Maivor</h3>
+        <div class="cli-detail">
+          <p>Automação completa do funil de matrículas, com agendamento inteligente e follow-up automático de interessados.</p>
+          <ul class="cli-stats">
+            <li><strong>3.4x</strong><span>Matrículas</span></li>
+            <li><strong>-70%</strong><span>Tempo de resposta</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="cli-card">
+      <span class="cli-ring" aria-hidden="true"></span>
+      <div class="cli-media has-img"><img src="./assets/img/easy-cover.jpg" alt="EASY" width="900" height="1600" loading="lazy" /></div>
+      <span class="cli-label">EASY</span>
+      <div class="cli-info">
+        <span class="cli-tag">Tecnologia</span>
+        <h3 class="cli-name">EASY</h3>
+        <div class="cli-detail">
+          <p>Integração da IA ao sistema de agendamentos, reduzindo faltas com confirmações e lembretes automáticos.</p>
+          <ul class="cli-stats">
+            <li><strong>-45%</strong><span>Faltas</span></li>
+            <li><strong>+180%</strong><span>Agendamentos</span></li>
+          </ul>
+        </div>
+      </div>
+    </article>
+      </div>
+    </div>
+    <div class="cli-dots" role="tablist" aria-label="Selecionar cliente"></div>
+  </div>
+  </div>
+  </div>
+</section>
+</div>
+
+<!-- ============ 5. RODAPÉ ============ -->
+<footer id="contact" class="ft">
+  <div class="ft-inner">
+    <div class="ft-brand">
+      <img src="./assets/img/fx-logo.png" alt="FAVX" width="547" height="342" class="ft-logo" />
+      <p class="ft-tagline">IA, CRM e automação para empresas que querem vender mais.</p>
+    </div>
+
+    <!-- TODO: substituir os placeholders abaixo pelos dados reais -->
+    <div class="ft-contact">
+      <a class="ft-item" href="mailto:cauanrfavoretti@gmail.com">
+        <span class="ft-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg></span>
+        <span><b>E-mail</b>cauanrfavoretti@gmail.com</span>
+      </a>
+      <a class="ft-item" href="https://wa.me/5592994486005">
+        <span class="ft-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></span>
+        <span><b>Telefone / WhatsApp</b>92 99448-6005</span>
+      </a>
+      <a class="ft-item" href="https://instagram.com/[adicionar instagram]" target="_blank" rel="noopener">
+        <span class="ft-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></span>
+        <span><b>Instagram</b>[adicionar Instagram]</span>
+      </a>
+    </div>
+  </div>
+  <p class="ft-legal">&copy; FAVX &mdash; IA, CRM e automação comercial.</p>
+</footer>
+
+</div>
+</x-dc>
+
+<!-- ============ NAV — auto-hide outside the hero ============ -->
+<script>
+(() => {
+  'use strict';
+
+  const nav  = document.getElementById('favxNav');
+  const hero = document.getElementById('heroWrap') || document.getElementById('home');
+  if (!nav || !hero) return;
+
+  /* Touch devices have no cursor, so the peek gesture can never happen —
+     hiding the bar there would strand the visitor with no way to navigate. */
+  if (matchMedia('(hover: none)').matches) return;
+
+  const PEEK_ZONE = 90;     // px from the top that summons the bar
+  const LINGER    = 2200;   // ms it stays before dissolving again
+  let timer = null, overNav = false;
+
+  const inHero = () => hero.getBoundingClientRect().bottom > 80;
+
+  function reveal(temporary) {
+    clearTimeout(timer);
+    nav.classList.remove('is-hidden');
+    nav.classList.toggle('is-peeking', !!temporary);
+    if (temporary) timer = setTimeout(conceal, LINGER);
+  }
+
+  function conceal() {
+    if (overNav || inHero()) return;   // never hide under the cursor
+    clearTimeout(timer);
+    nav.classList.add('is-hidden');
+    nav.classList.remove('is-peeking');
+  }
+
+  function sync() {
+    if (inHero()) reveal(false);       // always on while the hero is on screen
+    else if (!overNav) conceal();
+  }
+
+  addEventListener('scroll', sync, { passive: true });
+  addEventListener('resize', sync);
+
+  addEventListener('mousemove', (e) => {
+    if (inHero()) return;
+    if (e.clientY <= PEEK_ZONE) reveal(true);
+  }, { passive: true });
+
+  nav.addEventListener('pointerenter', () => { overNav = true; clearTimeout(timer); });
+  nav.addEventListener('pointerleave', () => {
+    overNav = false;
+    if (!inHero()) timer = setTimeout(conceal, 800);
+  });
+
+  // keyboard users must be able to reach it too
+  nav.addEventListener('focusin', () => { overNav = true; reveal(false); });
+  nav.addEventListener('focusout', () => {
+    overNav = false;
+    if (!inHero()) timer = setTimeout(conceal, 600);
+  });
+
+  sync();
+})();
+</script>
+
+<!-- ============ IAs — reveal + animated counters ============ -->
+<script>
+(() => {
+  'use strict';
+  const sec = document.getElementById('ias');
+  if (!sec) return;
+  const reveals = [...sec.querySelectorAll('.ia-reveal')];
+  const reduce  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach((el) => el.classList.add('is-in'));
+    return;
+  }
+
+  // fade + slide on entrance
+  const rio = new IntersectionObserver((entries, obs) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add('is-in'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+  reveals.forEach((el) => rio.observe(el));
+})();
+</script>
+
+<!-- ============ CLARA — live self-playing chat ============ -->
+<script>
+(() => {
+  'use strict';
+  const chat = document.getElementById('claraChat');
+  if (!chat) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // customer <-> AI conversation that loops
+  const script = [
+    { who: 'in',  text: 'Oi, vi o anúncio de vocês. Ainda tem vaga pra hoje? 👀' },
+    { who: 'out', text: 'Oi! 😊 Tenho sim. Consigo te garantir uma condição especial ainda hoje. Como posso te chamar?' },
+    { who: 'in',  text: 'Sou o Rafael. Quanto fica?' },
+    { who: 'out', text: 'Prazer, Rafael! Fechando hoje eu seguro por R$ 297. Quer que eu já reserve a sua vaga? ✅' },
+    { who: 'in',  text: 'Fechado! Como faço o pagamento?' },
+    { who: 'out', text: 'Perfeito 🙌 Te mandei o link agora. Assim que confirmar, sua vaga já fica garantida!' }
+  ];
+
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const toBottom = () => { chat.scrollTop = chat.scrollHeight; };
+
+  function add(cls, html) {
+    const el = document.createElement('div');
+    el.className = cls;
+    if (html) el.innerHTML = html;
+    chat.appendChild(el);
+    // force reflow so the entrance transition fires
+    void el.offsetWidth;
+    el.classList.add('is-show');
+    toBottom();
+    return el;
+  }
+
+  let running = false;
+  async function run() {
+    if (running) return;
+    running = true;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      chat.innerHTML = '';
+      for (const m of script) {
+        if (m.who === 'out') {
+          const t = add('ia-typing', '<span></span><span></span><span></span>');
+          await wait(reduce ? 220 : 1150);
+          t.remove();
+        }
+        add('ia-msg ' + m.who, m.text);
+        await wait(reduce ? 320 : (m.who === 'in' ? 900 : 1600));
+      }
+      await wait(reduce ? 700 : 2800);
+    }
+  }
+
+  // only start once the section is on screen (saves cycles + syncs with reveal)
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach((e) => { if (e.isIntersecting) { run(); obs.disconnect(); } });
+    }, { threshold: 0.25 });
+    io.observe(chat);
+  } else {
+    run();
+  }
+})();
+</script>
+
+<!-- ============ NEXUS results frame — glitch + bloom on scroll ============ -->
+<script>
+(() => {
+  'use strict';
+  const shot = document.querySelector('#ias .ia-shot');
+  if (!shot) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) { shot.classList.add('is-lit'); return; }
+
+  let inView = false;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting && !inView) {
+        inView = true;
+        // re-arm the CSS animations by removing + reflow + re-adding the class
+        shot.classList.remove('is-lit');
+        void shot.offsetWidth;
+        shot.classList.add('is-lit');
+      } else if (!e.isIntersecting && inView) {
+        inView = false;
+        shot.classList.remove('is-lit');
+      }
+    });
+  }, { threshold: 0.35 });
+  io.observe(shot);
+})();
+</script>
+
+<!-- ============ NEXUS VOICE — 3D neural-circuit phone (canvas) ============ -->
+<script>
+(() => {
+  'use strict';
+  const canvas = document.getElementById('voiceNeural');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- geometry: an interactive neural sphere ----------
+  // color follows the page movement (scroll), cycling blue / orange / purple
+  const nodes = [];   // {bx,by,bz, x,y,z, ph, hue}
+  const edges = [];   // {a,b}
+
+  // Fibonacci sphere — evenly distributed points on a unit sphere
+  const N = 220, GA = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (i / (N - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const th = GA * i;
+    const x = Math.cos(th) * r, z = Math.sin(th) * r;
+    nodes.push({ bx: x, by: y, bz: z, x, y, z, ph: Math.random() * Math.PI * 2, hue: Math.atan2(z, x) / (Math.PI * 2) + 0.5 });
+  }
+
+  // connect each node to its nearest neighbors (neural web)
+  const K = 4, seen = new Set();
+  for (let i = 0; i < N; i++) {
+    const a = nodes[i], d = [];
+    for (let j = 0; j < N; j++) {
+      if (j === i) continue;
+      const b = nodes[j];
+      d.push([(a.bx - b.bx) ** 2 + (a.by - b.by) ** 2 + (a.bz - b.bz) ** 2, j]);
+    }
+    d.sort((p, q) => p[0] - q[0]);
+    for (let k = 0; k < K; k++) {
+      const j = d[k][1], key = i < j ? i + '_' + j : j + '_' + i;
+      if (seen.has(key)) continue;
+      seen.add(key); edges.push({ a: i, b: j });
+    }
+  }
+
+  const PULSES = reduce ? 0 : 12;
+  const pulses = [];
+  for (let i = 0; i < PULSES; i++) pulses.push({ e: (Math.random() * edges.length) | 0, t: Math.random(), sp: 0.5 + Math.random() * 0.8 });
+
+  const P = new Array(nodes.length);
+  for (let i = 0; i < nodes.length; i++) P[i] = { x: 0, y: 0, s: 1, z: 0, r: 0, g: 0, b: 0 };
+
+  // ---------- canvas sizing ----------
+  let W = 0, H = 0, baseScale = 1, cx = 0, cy = 0;
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width; H = rect.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    baseScale = Math.min(W, H) * 0.34; cx = W / 2; cy = H / 2;
+  }
+
+  // ---------- projection ----------
+  const F = 3.4;
+  function project(ay, ax) {
+    const cY = Math.cos(ay), sY = Math.sin(ay), cX = Math.cos(ax), sX = Math.sin(ax);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      const x1 = n.x * cY + n.z * sY;
+      const z1 = -n.x * sY + n.z * cY;
+      const y2 = n.y * cX - z1 * sX;
+      const z2 = n.y * sX + z1 * cX;
+      const s = baseScale * (F / (F - z2));
+      const p = P[i]; p.x = cx + x1 * s; p.y = cy - y2 * s; p.s = F / (F - z2); p.z = z2;
+    }
+  }
+
+  // palette (blue / orange / purple) — a phase 0..1 loops through all three
+  const PAL = [[40, 120, 255], [255, 130, 25], [150, 80, 246]];
+  function palMix(phase) {
+    const t = (((phase % 1) + 1) % 1) * 3;
+    const i = Math.floor(t) % 3, f = t - Math.floor(t), a = PAL[i], b = PAL[(i + 1) % 3];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+
+  let colorPhase = 0, lastScroll = 0, energy = 0, primed = false;
+  // mouse interaction state (target vs. eased, plus a fading influence)
+  let mx = 0, my = 0, tmx = 0, tmy = 0, mInf = 0, lastMx = 0, lastMy = 0;
+
+  function draw(time) {
+    // --- react to page movement (scroll drives color + energy) ---
+    const de = document.documentElement;
+    const sc = window.pageYOffset || (de && de.scrollTop) || 0;
+    if (!primed) { lastScroll = sc; primed = true; }
+    const dv = sc - lastScroll; lastScroll = sc;
+    energy = Math.min(1, energy * 0.90 + Math.min(Math.abs(dv), 90) * 0.010);
+    let target = sc / 1400;                       // scrolling cycles the palette
+    if (!reduce) target += time * 0.00003;        // gentle idle drift so it stays alive
+    colorPhase += (target - colorPhase) * 0.06;   // smooth follow
+
+    // --- mouse: ease toward cursor; influence fades when the mouse is idle ---
+    mx += (tmx - mx) * 0.08; my += (tmy - my) * 0.08;
+    mInf *= 0.96;
+    const spin = time * 0.00010;
+    const ay = reduce ? 0.5 : spin + mx * 0.6 * mInf;
+    const ax = reduce ? -0.16 : (-0.14 + Math.sin(time * 0.0004) * 0.08 - my * 0.45 * mInf);
+
+    // cursor direction (front hemisphere) mapped back into model space for the bulge
+    const cY = Math.cos(ay), sY = Math.sin(ay), cX = Math.cos(ax), sX = Math.sin(ax);
+    let VX = mx * 0.9, VY = -my * 0.9, VZ = 1;
+    const VL = Math.hypot(VX, VY, VZ) || 1; VX /= VL; VY /= VL; VZ /= VL;
+    const y_ = VY * cX + VZ * sX, z1_ = -VY * sX + VZ * cX;
+    const mdx = VX * cY - z1_ * sY, mdz = VX * sY + z1_ * cY, mdy = y_;
+    const bulge = reduce ? 0 : 0.22 * mInf;
+
+    // --- random organic breathing + a cursor-following bulge ---
+    const amp = reduce ? 0 : (0.04 + energy * 0.10);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      let rr = 1 + Math.sin(time * 0.0016 + n.ph) * amp + Math.sin(time * 0.0009 + n.ph * 1.7) * amp * 0.4;
+      if (bulge) { const d = n.bx * mdx + n.by * mdy + n.bz * mdz; if (d > 0) rr += bulge * d * d * d; }
+      if (rr > 1.3) rr = 1.3;                 // keep the sphere inside its frame
+      n.x = n.bx * rr; n.y = n.by * rr; n.z = n.bz * rr;
+    }
+    project(ay, ax);
+
+    // per-node color from the palette, offset by position → all 3 colors on the sphere
+    for (let i = 0; i < nodes.length; i++) {
+      const c = palMix(colorPhase + nodes[i].hue), p = P[i];
+      p.r = c[0] | 0; p.g = c[1] | 0; p.b = c[2] | 0;
+    }
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    const boost = 0.5 + energy * 0.6 + mInf * 0.3;
+
+    for (let i = 0; i < edges.length; i++) {
+      const e = edges[i], a = P[e.a], b = P[e.b];
+      const dn = Math.max(0, Math.min(1, ((a.z + b.z) * 0.5 + 1) / 2));
+      ctx.strokeStyle = `rgba(${a.r},${a.g},${a.b},${(0.17 * (0.4 + dn * 1.1) * boost).toFixed(3)})`;
+      ctx.lineWidth = Math.max(a.s, b.s);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    for (let i = 0; i < nodes.length; i++) {
+      const p = P[i];
+      const dn = Math.max(0, Math.min(1, (p.z + 1) / 2));
+      const rad = 1.7 * p.s * (0.7 + dn * 0.6);
+      ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
+      ctx.globalAlpha = 0.16 * (0.5 + dn * 0.7) * boost;
+      ctx.beginPath(); ctx.arc(p.x, p.y, rad * 3.4, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = Math.min(1, 0.9 * (0.5 + dn * 0.5));
+      ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    for (let i = 0; i < pulses.length; i++) {
+      const pu = pulses[i]; pu.t += pu.sp * 0.016;
+      if (pu.t > 1) { pu.t -= 1; pu.e = (Math.random() * edges.length) | 0; }
+      const e = edges[pu.e]; if (!e) continue;
+      const a = P[e.a], b = P[e.b], s = (a.s + b.s) * 0.5;
+      const x = a.x + (b.x - a.x) * pu.t, y = a.y + (b.y - a.y) * pu.t;
+      ctx.fillStyle = `rgb(${a.r},${a.g},${a.b})`;
+      ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(x, y, 2.4 * s, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(x, y, 6.5 * s, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- run / observe ----------
+  let raf = 0, running = false;
+  const loop = (t) => { draw(t); raf = requestAnimationFrame(loop); };
+  function start() { if (running) return; running = true; raf = requestAnimationFrame(loop); }
+  function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+  resize();
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { resize(); if (!running) draw(performance.now()); }, 150); });
+
+  if (reduce) { draw(performance.now()); return; }
+
+  // mouse movement steers + energizes the sphere
+  window.addEventListener('pointermove', (e) => {
+    const r = canvas.getBoundingClientRect();
+    if (!r.width) return;
+    const nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    const ny = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    tmx = Math.max(-1.5, Math.min(1.5, nx));
+    tmy = Math.max(-1.5, Math.min(1.5, ny));
+    const d = Math.hypot(tmx - lastMx, tmy - lastMy); lastMx = tmx; lastMy = tmy;
+    mInf = 1;
+    energy = Math.min(1, energy + d * 0.35);
+  }, { passive: true });
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((es) => { es.forEach((e) => { e.isIntersecting ? start() : stop(); }); }, { threshold: 0.1 });
+    io.observe(canvas);
+  } else { start(); }
+})();
+</script>
+
+<!-- ============ CLIENTS — scroll-pinned reveal ============ -->
+<script>
+(() => {
+  'use strict';
+
+  const track = document.getElementById('clientsTrack');
+  const sec   = document.getElementById('clients');
+  if (!track || !sec) return;
+
+  const head  = sec.querySelector('.cli-head');
+  const title = sec.querySelector('.cli-title');
+  const stack = sec.querySelector('.cli-stack');
+  const aura  = sec.querySelector('.cli-aura');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // opacity is script-driven from here on; until now it rendered fully visible,
+  // so a thrown error above leaves the section readable rather than blank
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  // ease-out so motion settles instead of arriving at constant speed
+  const ease  = (t) => 1 - Math.pow(1 - t, 3);
+  // maps p onto [a,b] and clamps outside it
+  const seg   = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+
+  if (reduced) {
+    // no scroll choreography: show the finished state and release the pin
+    track.style.height = 'auto';
+    sec.style.position = 'static';
+    sec.style.height = 'auto';
+    sec.style.padding = '130px 24px';
+    title.style.backgroundPosition = '0% 50%';
+    return;
+  }
+
+  let ticking = false;
+
+  function frame() {
+    ticking = false;
+    const r  = track.getBoundingClientRect();
+    const vh = innerHeight || document.documentElement.clientHeight;
+    // 0 when the section pins, 1 when it is about to release
+    const p  = clamp(-r.top / Math.max(1, track.offsetHeight - vh), 0, 1);
+
+    const tIn   = ease(seg(p, 0.00, 0.20));   // heading arrives
+    const tUp   = ease(seg(p, 0.16, 0.40));   // heading settles at the top
+    const tCard = ease(seg(p, 0.20, 0.44));   // cards rise in
+    const tOut  = ease(seg(p, 0.90, 1.00));   // everything is wiped away
+
+    // gradient sweep across the title, then fade on exit
+    title.style.backgroundPosition = `${lerp(100, 0, tIn)}% 50%`;
+
+    head.style.opacity   = String(tIn * (1 - tOut));
+    head.style.transform =
+      `translate3d(0,${lerp(46, 0, tIn) + lerp(0, -34, tUp) + lerp(0, -70, tOut)}px,0)` +
+      ` scale(${lerp(1.08, 1, tUp) * lerp(1, 0.96, tOut)})`;
+
+    stack.style.opacity   = String(tCard * (1 - tOut));
+    stack.style.transform =
+      `translate3d(0,${lerp(90, 0, tCard) + lerp(0, 60, tOut)}px,0) scale(${lerp(0.94, 1, tCard)})`;
+
+    // the gradient blobs bloom in and are removed on the way out
+    aura.style.opacity = String(lerp(0.35, 1, tIn) * (1 - tOut));
+    aura.style.transform = `scale(${lerp(1.15, 1, tIn) * lerp(1, 1.25, tOut)})`;
+  }
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(frame);
+  };
+
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  frame();
+})();
+</script>
+
+<!-- ============ CLIENTS — highlight carousel ============ -->
+<script>
+(() => {
+  'use strict';
+
+  const car = document.querySelector('#favx-root .cli-carousel');
+  if (!car) return;
+  const stage    = car.querySelector('.cli-stage');
+  const cards    = [...car.querySelectorAll('.cli-card')];
+  const prev     = car.querySelector('.cli-prev');
+  const next     = car.querySelector('.cli-next');
+  const dotsWrap = car.querySelector('.cli-dots');
+  if (!stage || !cards.length) return;
+
+  const N       = cards.length;
+  const SPREAD  = 62;    // % of card width each step moves sideways
+  const DEPTH   = 280;   // px pushed back per step
+  const ANGLE   = 42;    // deg of Y rotation per step
+  let idx = 0;
+
+  // one dot per card
+  const dots = cards.map((c, i) => {
+    const d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'cli-dot';
+    d.setAttribute('role', 'tab');
+    d.setAttribute('aria-label', `Cliente ${i + 1}`);
+    d.addEventListener('click', () => go(i));
+    dotsWrap && dotsWrap.appendChild(d);
+    return d;
+  });
+
+  /* Shortest signed distance around the ring: for 3 cards this yields
+     -1, 0 or 1, so the one that falls off an edge reappears on the other
+     side. That wrap is what makes the rotation endless in both directions. */
+  function ringOffset(d) {
+    d = ((d % N) + N) % N;
+    return d > N / 2 ? d - N : d;
+  }
+
+  /* `shift` is the fractional drag progress, so a swipe rotates the ring
+     continuously instead of only snapping when released. */
+  function layout(shift = 0) {
+    cards.forEach((c, i) => {
+      const o = ringOffset(i - idx + shift);
+      const a = Math.abs(o);
+      c.style.transform =
+        `translate3d(${o * SPREAD}%,0,${-a * DEPTH}px) rotateY(${-o * ANGLE}deg)`;
+      c.style.opacity = a < 0.5 ? 1 : Math.max(0.28, 0.62 - (a - 0.5) * 0.4);
+      c.style.zIndex  = String(10 - Math.round(a * 10));
+      const on = Math.abs(o) < 0.5;
+      c.classList.toggle('is-active', on);
+      c.setAttribute('aria-hidden', on ? 'false' : 'true');
+    });
+    dots.forEach((d, i) => {
+      const on = i === idx;
+      d.classList.toggle('is-on', on);
+      d.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  // idx wraps, so the arrows never hit an end
+  function go(i) {
+    idx = ((i % N) + N) % N;
+    layout();
+  }
+
+  prev && prev.addEventListener('click', () => go(idx - 1));
+  next && next.addEventListener('click', () => go(idx + 1));
+
+  // clicking a dimmed card promotes it
+  cards.forEach((c, i) => c.addEventListener('click', () => { if (i !== idx) go(i); }));
+
+  /* ---- drag / swipe ---- */
+  let dragging = false, startX = 0, dx = 0, moved = false, step = 260;
+
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true; moved = false; dx = 0;
+    startX = e.clientX;
+    // one full step equals the sideways travel between two cards
+    step = Math.max(120, cards[0].offsetWidth * (SPREAD / 100));
+    stage.classList.add('is-dragging');
+    stage.setPointerCapture(e.pointerId);
+  });
+
+  stage.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    dx = e.clientX - startX;
+    if (Math.abs(dx) > 4) moved = true;
+    layout(Math.max(-1, Math.min(1, dx / step)));   // rotate as you drag
+  });
+
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    stage.classList.remove('is-dragging');
+    const frac = dx / step;
+    if (frac <= -0.25) go(idx + 1);
+    else if (frac >= 0.25) go(idx - 1);
+    else layout();
+    dx = 0;
+  };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+
+  // a drag that ends on a card must not also register as a click
+  stage.addEventListener('click', (e) => {
+    if (moved) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  /* ---- keyboard ---- */
+  car.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); go(idx - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
+  });
+
+  /* transforms are percentage/deg based, so a resize needs no recalculation —
+     only the drag step is measured, and that is read at pointerdown */
+  layout();
+})();
+</script>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+
+  componentDidMount() {
+    if (this._done) return;
+    this._done = true;
+    this._setupReveal();
+    this._setupBgScrub();
+    this._setupParallax();
+    this._setupTilt();
+    this._setupGlow();
+  }
+
+  _setupReveal() {
+    const els = Array.from(document.querySelectorAll('#favx-root [data-reveal]'));
+    const ease = 'cubic-bezier(.2,.8,.2,1)';
+    els.forEach((el) => {
+      const orig = el.style.transform || '';
+      el.dataset.origTransform = orig;
+      el.style.opacity = '0';
+      el.style.transform = ('translateY(40px) ' + orig).trim();
+      el.style.filter = 'blur(14px)';
+      el.style.transition = `opacity 1s ${ease}, transform 1s ${ease}, filter 1s ${ease}`;
+      el.style.willChange = 'opacity, transform, filter';
+    });
+    const reveal = (el) => {
+      el.style.opacity = '1';
+      el.style.transform = el.dataset.origTransform || 'none';
+      el.style.filter = 'none';
+    };
+    if (!('IntersectionObserver' in window)) { els.forEach(reveal); return; }
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach((e) => { if (e.isIntersecting) { reveal(e.target); obs.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
+    els.forEach((el) => io.observe(el));
+    // fail-safe: never leave content invisible
+    setTimeout(() => els.forEach((el) => { if (getComputedStyle(el).opacity === '0') reveal(el); }), 4000);
+  }
+
+  _setupBgScrub() {
+    const wrap = document.querySelector('#favx-root [data-bg-scrub]');
+    if (!wrap) return;
+    const sec = wrap.closest('section');
+    const update = () => {
+      const r = sec.getBoundingClientRect();
+      const wh = window.innerHeight || document.documentElement.clientHeight;
+      const p = Math.max(0, Math.min(1, (wh * 0.9 - r.top) / (wh * 0.6)));
+      wrap.style.opacity = String(p);
+    };
+    update();
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { update(); ticking = false; });
+    };
+    document.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+  }
+
+  _setupParallax() {
+    document.querySelectorAll('#favx-root section').forEach((sec) => {
+      const blobs = sec.querySelectorAll('[data-parallax]');
+      if (!blobs.length) return;
+      sec.addEventListener('mousemove', (e) => {
+        const r = sec.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        blobs.forEach((el, i) => {
+          const d = (i + 1) * 16;
+          el.style.transition = 'transform .6s cubic-bezier(.2,.8,.2,1)';
+          el.style.transform = `translate(${x * d}px, ${y * d}px)`;
+        });
+      });
+    });
+  }
+
+  _setupTilt() {
+    document.querySelectorAll('#favx-root [data-tilt]').forEach((card) => {
+      card.style.transition = 'transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .35s';
+      const base = card.style.boxShadow;
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        const scale = card.style.transform && card.style.transform.includes('scale(1.05)') ? 1.05 : 1;
+        card.style.transform = `perspective(1000px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateY(-6px) scale(${scale})`;
+      });
+      card.addEventListener('mouseleave', () => {
+        const wasScaled = card.getAttribute('data-scaled') === '1';
+        card.style.transform = wasScaled ? 'scale(1.05)' : '';
+      });
+    });
+    // preserve the highlighted Plus card scale
+    document.querySelectorAll('#favx-root [data-tilt]').forEach((card) => {
+      if (card.style.transform && card.style.transform.includes('scale(1.05)')) card.setAttribute('data-scaled', '1');
+    });
+  }
+
+  _setupGlow() {
+    document.querySelectorAll('#favx-root [data-glow]').forEach((card) => {
+      const layer = card.querySelector('[data-glow-layer]');
+      if (!layer) return;
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        layer.style.opacity = '1';
+        layer.style.background = `radial-gradient(340px circle at ${e.clientX - r.left}px ${e.clientY - r.top}px, rgba(0,92,255,.22), transparent 62%)`;
+      });
+      card.addEventListener('mouseleave', () => { layer.style.opacity = '0'; });
+    });
+  }
+
+}
+</script>
+
+<!-- ============ BOOT LOADER ============ -->
+<script>
+(() => {
+  'use strict';
+  const el = document.getElementById('favx-loader');
+  if (!el) return;
+  const fill = el.querySelector('.fill');
+  const pct  = el.querySelector('.pct');
+
+  const START  = performance.now();
+  const MIN_MS = 900;    // don't flash on a warm cache
+  const MAX_MS = 6000;   // never trap the visitor behind a slow asset
+
+  let target = 0.10, shown = 0;
+  const bump = (v) => { if (v > target) target = v; };
+
+  /* The hero clip is very large, so waiting on window.load alone could stall
+     for tens of seconds. Progress is driven by the milestones that actually
+     matter for first paint, with a hard time cap as the backstop. */
+  const onReady = () => bump(0.45);
+  if (document.readyState !== 'loading') onReady();
+  else document.addEventListener('DOMContentLoaded', onReady);
+
+  if (document.readyState === 'complete') bump(1);
+  else addEventListener('load', () => bump(1));
+
+  const hero = document.getElementById('vA');
+  if (hero) {
+    if (hero.readyState >= 2) bump(0.75);
+    hero.addEventListener('loadeddata', () => bump(0.75));
+    hero.addEventListener('canplay',    () => bump(0.92));
+  }
+
+  function tick(now) {
+    const elapsed = now - START;
+    if (elapsed >= MAX_MS) target = 1;
+    bump(Math.min(0.9, elapsed / MAX_MS));      // creep so it never looks stuck
+
+    shown += (target - shown) * 0.08;
+    const p = Math.round(shown * 100);
+    fill.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
+    pct.textContent = p + '%';
+    el.setAttribute('aria-valuenow', p);
+
+    if (shown > 0.995 && elapsed > MIN_MS) {
+      fill.style.clipPath = 'inset(0 0 0 0)';
+      pct.textContent = '100%';
+      el.setAttribute('aria-valuenow', 100);
+      el.classList.add('is-done');
+      setTimeout(() => el.remove(), 700);
+      return;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<!-- ============ HERO cinematic engine (WebGL video + mouse 3D + scroll distortion) ============ -->
+<script>
+(() => {
+  'use strict';
+
+  const hero     = document.getElementById('home');
+  const scene    = document.getElementById('scene');
+  const canvas   = document.getElementById('gl');
+  const content  = document.getElementById('content');
+  const glowBlue = document.getElementById('glowBlue');
+  const glowOr   = document.getElementById('glowOrange');
+  const partsEl  = document.getElementById('particles');
+  const scrollHint = document.getElementById('scroll');
+  if (!hero || !canvas) return;
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = matchMedia('(hover: none)').matches;
+
+  /* ---------------- particles ---------------- */
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('span');
+    p.className = 'p';
+    const s = 2 + Math.random() * 2.5;
+    p.style.width = p.style.height = s + 'px';
+    p.style.left = (4 + Math.random() * 92) + '%';
+    p.style.top  = (12 + Math.random() * 76) + '%';
+    p.style.setProperty('--o', (0.15 + Math.random() * 0.4).toFixed(2));
+    p.style.animationDuration = (9 + Math.random() * 10).toFixed(1) + 's';
+    p.style.animationDelay = (-Math.random() * 14).toFixed(1) + 's';
+    partsEl.appendChild(p);
+  }
+
+  /* ---------------- videos: normal playback, seamless loop ---------------- */
+  const vA = document.getElementById('vA');
+  vA.muted = true;
+
+  let fallbackMode = false;
+  function useFallback(){
+    fallbackMode = true;
+    canvas.style.display = 'none';
+    vA.classList.add('asFallback');
+  }
+
+  /* single clip on a native loop — no crossfade pair, so these stay at rest */
+  const cur = vA;
+  const dispMix = 0;
+  const seam = 0;
+
+  const tryPlay = v => v.play().catch(() => {});
+  const kick = () => { tryPlay(cur); removeEventListener('pointerdown', kick); removeEventListener('touchstart', kick); };
+  tryPlay(vA);
+  addEventListener('pointerdown', kick);
+  addEventListener('touchstart', kick, { passive: true });
+
+  /* ---------------- WebGL ---------------- */
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+  if (!gl) useFallback();
+
+  const VERT = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main(){ vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+
+  const FRAG = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D uTexA, uTexB;
+    uniform float uMix, uTime, uPulse, uSeam, uScroll;
+    uniform vec2 uRes, uVidRes, uMouse;
+    uniform vec4 uRipple[5];
+
+    vec2 coverUV(vec2 uv){
+      float ra = uRes.x / uRes.y;
+      float rv = uVidRes.x / uVidRes.y;
+      vec2 s = (ra > rv) ? vec2(1.0, rv / ra) : vec2(ra / rv, 1.0);
+      return (uv - 0.5) * s + 0.5;
+    }
+
+    vec3 vid(vec2 suv){
+      vec2 vuv = coverUV(suv);
+      vec3 a = texture2D(uTexA, vuv).rgb;
+      if (uMix < 0.001) return a;
+      vec3 b = texture2D(uTexB, vuv).rgb;
+      return mix(a, b, uMix);
+    }
+
+    void main(){
+      float aspect = uRes.x / uRes.y;
+      vec2 uv = vUv;
+      uv.y = 1.0 - uv.y;
+
+      // no time-driven breath/drift: the frame only moves when the mouse does
+      float zoom = 1.045 + uPulse * 0.010 + uSeam * 0.013 + uScroll * 0.075;
+      vec2 fromF = uv - vec2(0.5, 0.47);
+      vec2 par = uMouse * vec2(0.011, -0.009)
+               + uMouse * vec2(0.022, -0.018) * dot(fromF, fromF);
+      uv = (uv - 0.5) / zoom + 0.5 + par;
+
+      if (uScroll > 0.001) {
+        vec2 cc = uv - vec2(0.5, 0.47); cc.x *= aspect;
+        float d2 = dot(cc, cc);
+        cc *= 1.0 - uScroll * (0.55 * d2);
+        cc.x += sin(cc.y * 9.0 + uTime * 2.1) * 0.016 * uScroll;
+        cc.y += cos(cc.x * 7.0 - uTime * 1.7) * 0.013 * uScroll;
+        float sw = 1.0 + uScroll * 0.10 * sin(uTime * 1.3);
+        cc *= sw;
+        cc.x /= aspect;
+        uv = cc + vec2(0.5, 0.47);
+      }
+
+      vec2 shift = vec2(0.0);
+      float rippleLight = 0.0;
+      for (int i = 0; i < 5; i++){
+        vec4 r = uRipple[i];
+        if (r.w > 0.001){
+          float age = uTime - r.z;
+          if (age > 0.0 && age < 2.4){
+            vec2 dv = uv - r.xy; dv.x *= aspect;
+            float dist = length(dv);
+            float rad = age * 0.34;
+            float ring = exp(-pow((dist - rad) * 16.0, 2.0));
+            float env = r.w * exp(-age * 1.9);
+            vec2 dir = dv / max(dist, 1e-4);
+            dir.x /= aspect;
+            shift += dir * ring * env * 0.014;
+            rippleLight += ring * env;
+          }
+        }
+      }
+      uv += shift;
+
+      vec2 c = uv - vec2(0.5, 0.47); c.x *= aspect;
+      float dc = length(c);
+      float lens = exp(-dc * dc * 5.5) * uPulse * 0.020;
+      uv = (uv - vec2(0.5, 0.47)) * (1.0 - lens) + vec2(0.5, 0.47);
+
+      float dCenter = length((vUv - 0.5) * vec2(aspect, 1.0));
+      vec2 caDir = (vUv - 0.5) * (0.0022 * smoothstep(0.15, 0.85, dCenter) + uPulse * 0.0028 + uSeam * 0.0014
+                   + uScroll * (0.006 + 0.012 * dCenter));
+      vec3 col;
+      col.r = vid(uv + caDir).r;
+      col.g = vid(uv).g;
+      col.b = vid(uv - caDir).b;
+
+      float blurAmt = smoothstep(0.48, 0.98, dCenter) * (1.0 + uPulse * 1.4) + uSeam * 0.55
+                    + uScroll * (0.8 + 2.2 * smoothstep(0.25, 1.0, dCenter));
+      vec2 px = blurAmt * 2.6 / uRes;
+      vec3 blur = ( vid(uv + px) + vid(uv - px)
+                  + vid(uv + vec2(px.x, -px.y)) + vid(uv - vec2(px.x, -px.y)) ) * 0.25;
+      col = mix(col, blur, min(blurAmt, 1.0) * 0.65);
+
+      float lum = dot(col, vec3(0.299, 0.587, 0.114));
+      float glow = smoothstep(0.60, 0.95, lum);
+      col += (col * 0.55 + blur * 0.45) * glow * (0.26 + uSeam * 0.16);
+
+      vec2 m = vec2(0.5) + uMouse * vec2(0.5, -0.5) * 0.32;
+      vec2 dm = vUv - m; dm.x *= aspect;
+      col *= 1.0 + exp(-dot(dm, dm) * 2.4) * 0.055;
+
+      vec3 tone = mix(vec3(0.0, 0.36, 1.0), vec3(1.0, 0.50, 0.10), smoothstep(0.25, 0.85, lum));
+      col += tone * uPulse * (0.085 + rippleLight * 0.9);
+      col += rippleLight * vec3(0.35, 0.55, 1.0) * 0.14;
+
+      col *= mix(mix(0.78, 0.42, uScroll), 1.0, smoothstep(1.28, 0.34, dCenter));
+      float g = fract(sin(dot(vUv * uRes + uTime * 61.7, vec2(12.9898, 78.233))) * 43758.5453);
+      col += (g - 0.5) * 0.022;
+
+      col *= 1.0 - smoothstep(0.30, 0.96, uScroll);
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  let prog, loc = {}, texA, texB;
+
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+
+  function makeTexture(){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([5, 5, 5, 255]));
+    return t;
+  }
+
+  if (gl) {
+    try {
+      prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      gl.useProgram(prog);
+
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const aPos = gl.getAttribLocation(prog, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      ['uTexA','uTexB','uMix','uTime','uPulse','uSeam','uScroll','uRes','uVidRes','uMouse','uRipple']
+        .forEach(n => loc[n] = gl.getUniformLocation(prog, n));
+
+      texA = makeTexture();
+      texB = makeTexture();
+      gl.uniform1i(loc.uTexA, 0);
+      gl.uniform1i(loc.uTexB, 1);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    } catch (e) {
+      useFallback();
+      prog = null;
+    }
+  }
+
+  /* ---------------- sizing ---------------- */
+  let W = 0, H = 0;
+  function resize(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const r = canvas.getBoundingClientRect();
+    W = Math.round(r.width * dpr);
+    H = Math.round(r.height * dpr);
+    canvas.width = W; canvas.height = H;
+    if (gl) gl.viewport(0, 0, W, H);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  /* ---------------- input springs ---------------- */
+  let tx = 0, ty = 0, mx = 0, my = 0;
+  /* Exponential follow instead of a spring: it settles fast, never overshoots
+     and is stable at any frame rate. Higher = snappier. */
+  const FOLLOW = 22;
+
+  /* Playback follows the cursor: the clip only advances while the mouse is
+     moving, and pauses on the current frame once it goes still. */
+  const IDLE_AFTER = 0.25;     // seconds of stillness before the clip freezes
+  let lastMove = 0, playing = true;
+
+  hero.addEventListener('pointermove', e => {
+    if (isTouch) return;
+    const r = hero.getBoundingClientRect();
+    tx = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ty = ((e.clientY - r.top) / r.height) * 2 - 1;
+    lastMove = now;
+  });
+
+  /* ---------------- click pulse + ripples ---------------- */
+  const ripples = Array.from({ length: 5 }, () => ({ x: 0.5, y: 0.5, t: -10, s: 0 }));
+  let rippleIdx = 0, pulse = 0, kickScale = 0;
+
+  hero.addEventListener('pointerdown', e => {
+    if (reduced) return;
+    const r = hero.getBoundingClientRect();
+    const cx = (e.clientX - r.left) / r.width;
+    const cy = (e.clientY - r.top) / r.height;
+    const rp = ripples[rippleIdx = (rippleIdx + 1) % ripples.length];
+    rp.x = 0.5 + (cx - 0.5) * 0.35;
+    rp.y = 0.47 + (cy - 0.47) * 0.35;
+    rp.t = now;
+    rp.s = 1;
+    pulse = Math.min(1, pulse + 0.9);
+    kickScale = 1;
+  });
+
+  /* ---------------- scroll immersion ---------------- */
+  let scrollTarget = 0, scrollProg = 0;
+  function onScroll(){
+    const h = hero.getBoundingClientRect().height || innerHeight;
+    scrollTarget = Math.min(1, Math.max(0, window.scrollY / (h * 0.85)));
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- render loop ---------------- */
+  const t0 = performance.now();
+  let last = t0, now = 0, running = true;
+  const rippleData = new Float32Array(20);
+
+  function uploadVideo(unit, tex, v){
+    if (v.readyState >= 2 && (!v.paused || !v._uploaded)) {
+      gl.activeTexture(unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      try {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v);
+      } catch (e) {
+        prog = null;
+        useFallback();
+        return;
+      }
+      v._uploaded = true;
+    }
+  }
+
+  function frame(ts){
+    if (!running) return;
+    requestAnimationFrame(frame);
+    const dt = Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+    now = (ts - t0) / 1000;
+
+
+    if (!reduced) {
+      const follow = 1 - Math.exp(-dt * FOLLOW);
+      mx += (tx - mx) * follow;
+      my += (ty - my) * follow;
+
+      // cursor moving -> clip runs; cursor still -> clip freezes on the current frame
+      const idle = (now - lastMove) > IDLE_AFTER;
+      if (!isTouch) {
+        if (idle && playing) {
+          vA.pause();
+          playing = false;
+        } else if (!idle && !playing) {
+          tryPlay(cur);
+          playing = true;
+        }
+      }
+
+      pulse *= Math.exp(-dt * 2.0);
+      kickScale *= Math.exp(-dt * 3.2);
+      scrollProg += (scrollTarget - scrollProg) * (1 - Math.exp(-dt * 7));
+    }
+
+    if (!reduced) {
+      const bz = 1 + kickScale * 0.006 + scrollProg * 0.06;
+      const tz = scrollProg * 90;
+      scene.style.transform =
+        `perspective(1100px) translate3d(${(-mx * 20).toFixed(2)}px, ${(-my * 15).toFixed(2)}px, ${tz.toFixed(1)}px)` +
+        ` rotateY(${(mx * 3.4).toFixed(3)}deg) rotateX(${(-my * 2.6).toFixed(3)}deg)` +
+        ` scale(${bz.toFixed(4)})`;
+      glowBlue.style.transform = `translate3d(${(-mx * 34).toFixed(1)}px, ${(-my * 26).toFixed(1)}px, 0)`;
+      glowOr.style.transform   = `translate3d(${(-mx * 27).toFixed(1)}px, ${(-my * 20).toFixed(1)}px, 0)`;
+      partsEl.style.transform  = `translate3d(${(-mx * 50).toFixed(1)}px, ${(-my * 38).toFixed(1)}px, 0)`;
+      const layerFade = (1 - Math.min(1, Math.max(0, (scrollProg - 0.30) / 0.66))).toFixed(3);
+      glowBlue.style.opacity = glowOr.style.opacity = partsEl.style.opacity = layerFade;
+      content.style.transform  =
+        `translate3d(${(mx * 14).toFixed(2)}px, ${(my * 10).toFixed(2)}px, ${(-scrollProg * 60).toFixed(1)}px)` +
+        ` rotateY(${(-mx * 1.0).toFixed(3)}deg) rotateX(${(my * 0.8).toFixed(3)}deg)`;
+      content.style.opacity = Math.max(0, 1 - scrollProg * 1.25).toFixed(3);
+      scrollHint.style.opacity = (1 - scrollProg * 3).toFixed(3);
+    }
+
+    if (fallbackMode) {
+      const fade = Math.min(1, Math.max(0, (scrollProg - 0.30) / 0.66));
+      vA.style.opacity = (1 - fade).toFixed(3);
+      const blur = seam * 2.2 + scrollProg * 9;
+      const bright = (1 + seam * 0.05) * (1 - fade);
+      const contr = 1 + scrollProg * 0.25;
+      scene.style.filter = (blur > 0.01 || scrollProg > 0.01)
+        ? `blur(${blur.toFixed(2)}px) brightness(${bright.toFixed(3)}) contrast(${contr.toFixed(3)})`
+        : '';
+    }
+
+    if (gl && prog) {
+      uploadVideo(gl.TEXTURE0, texA, vA);
+      gl.uniform1f(loc.uMix, dispMix);
+      gl.uniform1f(loc.uSeam, seam);
+      gl.uniform1f(loc.uScroll, reduced ? 0 : scrollProg);
+      gl.uniform1f(loc.uTime, now);
+      gl.uniform1f(loc.uPulse, reduced ? 0 : pulse);
+      gl.uniform2f(loc.uRes, W, H);
+      gl.uniform2f(loc.uVidRes, vA.videoWidth || 1920, vA.videoHeight || 972);
+      gl.uniform2f(loc.uMouse, reduced ? 0 : mx, reduced ? 0 : my);
+      for (let i = 0; i < 5; i++) {
+        const r = ripples[i];
+        rippleData[i * 4] = r.x; rippleData[i * 4 + 1] = r.y;
+        rippleData[i * 4 + 2] = r.t; rippleData[i * 4 + 3] = r.s;
+      }
+      gl.uniform4fv(loc.uRipple, rippleData);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+  }
+  requestAnimationFrame(frame);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      running = false;
+      vA.pause();
+    } else {
+      running = true;
+      last = performance.now();
+      if (playing) tryPlay(cur);   // stay frozen if the cursor was already still
+      requestAnimationFrame(frame);
+    }
+  });
+})();
+</script>
+
+<!-- ============ NAV liquid-glass sliding indicator ============ -->
+<script>
+(() => {
+  'use strict';
+  const wrap = document.getElementById('navLinks');
+  const pill = document.getElementById('navPill');
+  if (!wrap || !pill) return;
+  const links = Array.from(wrap.querySelectorAll('.nav-link'));
+  if (!links.length) return;
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let active = links.find(a => a.getAttribute('href') === location.hash) || links[0];
+  let animating = false;
+  // while a click-initiated smooth-scroll runs, scroll-spy must not hijack the pill
+  let programmatic = false, scrollIdle;
+  addEventListener('scroll', () => {
+    if (!programmatic) return;
+    clearTimeout(scrollIdle);
+    scrollIdle = setTimeout(() => { programmatic = false; }, 200);
+  }, { passive: true });
+
+  function metrics(el){
+    const pr = wrap.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    return { left: r.left - pr.left, width: r.width, height: r.height };
+  }
+  function apply(left, width, height, transition){
+    pill.style.transition = transition || 'none';
+    pill.style.height = height + 'px';
+    pill.style.width = width + 'px';
+    pill.style.transform = `translate(${left}px,-50%)`;
+  }
+
+  // instantly snap under an element (init / resize)
+  function snap(el){
+    const m = metrics(el);
+    pill.style.opacity = '1';
+    apply(m.left, m.width, m.height, 'none');
+  }
+
+  // liquid drag: stretch to cover both, then reform on the target
+  function slideTo(el){
+    if (el === active || animating) { if (el === active) return; }
+    const from = metrics(active);
+    const to = metrics(el);
+    pill.style.opacity = '1';
+
+    if (reduced) {
+      apply(to.left, to.width, to.height, 'none');
+      active = el; return;
+    }
+    animating = true;
+
+    // phase 1 — elongate like liquid across the gap
+    const uLeft = Math.min(from.left, to.left);
+    const uW = Math.max(from.left + from.width, to.left + to.width) - uLeft;
+    apply(uLeft, uW, to.height,
+      'transform .20s cubic-bezier(.4,0,.2,1), width .20s cubic-bezier(.4,0,.2,1)');
+
+    // phase 2 — contract & settle onto the target (slight overshoot = liquid snap)
+    setTimeout(() => {
+      apply(to.left, to.width, to.height,
+        'transform .46s cubic-bezier(.34,1.42,.5,1), width .46s cubic-bezier(.34,1.42,.5,1)');
+      setTimeout(() => { animating = false; }, 460);
+    }, 190);
+
+    active = el;
+  }
+
+  function setActive(el){
+    links.forEach(a => a.classList.toggle('active', a === el));
+  }
+
+  // init
+  setActive(active);
+  requestAnimationFrame(() => snap(active));
+  // re-snap after web-fonts / layout settle
+  setTimeout(() => snap(active), 350);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => snap(active));
+
+  links.forEach(a => a.addEventListener('click', () => {
+    programmatic = true;                 // suppress scroll-spy for this jump
+    clearTimeout(scrollIdle);
+    scrollIdle = setTimeout(() => { programmatic = false; }, 1200);
+    if (a === active) return;
+    setActive(a);
+    slideTo(a);
+  }));
+
+  // keep the pill aligned on resize
+  let rt;
+  addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => snap(active), 120); }, { passive: true });
+
+  // scroll-spy: follow the section currently in view
+  const byHref = {};
+  links.forEach(a => { const id = a.getAttribute('href').slice(1); if (id) byHref[id] = a; });
+  const spy = new IntersectionObserver((entries) => {
+    if (programmatic) return;            // click-scroll in progress — leave the pill alone
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = byHref[e.target.id];
+        if (el && el !== active) { setActive(el); slideTo(el); }
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+  Object.keys(byHref).forEach(id => { const sec = document.getElementById(id); if (sec) spy.observe(sec); });
+})();
+</script>
+
+<!-- ============ liquid glass + scroll reveal: reflexo + abertura ============ -->
+<script>
+(() => {
+  'use strict';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const glassCards = document.querySelectorAll('[data-glow]');
+  if (!glassCards.length) return;
+
+  /* ---- reflexo do mouse: segue cursor e atualiza gradiente radial ---- */
+  const glassWithReflect = new Map();
+  glassCards.forEach(card => {
+    const layer = card.querySelector('[data-glow-layer]');
+    if (!layer) return;
+    glassWithReflect.set(card, layer);
+  });
+
+  if (!reduced && glassWithReflect.size > 0) {
+    document.addEventListener('mousemove', e => {
+      glassWithReflect.forEach((layer, card) => {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        if (x >= 0 && x <= 100 && y >= 0 && y <= 100) {
+          // mouse dentro do card: ativa o reflexo
+          layer.style.setProperty('--mouse-x', x + '%');
+          layer.style.setProperty('--mouse-y', y + '%');
+          layer.style.opacity = '0.6';
+        } else {
+          // fora do card: fade out suave
+          layer.style.opacity = '0';
+        }
+      });
+    }, { passive: true });
+
+    // reset ao sair da página
+    document.addEventListener('mouseleave', () => {
+      glassWithReflect.forEach((layer) => { layer.style.opacity = '0'; });
+    }, { passive: true });
+  }
+
+  /* ---- abertura ao scroll: animate in quando entra em view ---- */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('reveal-active');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -80px 0px', threshold: 0.1 });
+
+  glassCards.forEach(card => {
+    if (!reduced) {
+      card.classList.remove('reveal-active');
+      observer.observe(card);
+    } else {
+      card.classList.add('reveal-active');
+    }
+  });
+})();
+</script>
+</body>
+</html>
