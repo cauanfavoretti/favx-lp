@@ -27,3 +27,15 @@ Os arquivos-fonte originais (vídeos brutos, uploads) **não são versionados** 
 ## Como visualizar
 
 Abra `FAVX Landing Page.dc.html` no builder `.dc.html`, ou sirva a pasta localmente para carregar os assets relativos.
+
+## Deploy (Vercel / hospedagem estática)
+
+O ponto de entrada servido na web é o **`index.html`** — uma versão browser-native gerada a partir do `.dc.html` (sem os wrappers `<x-dc>`/`<helmet>` do builder). Hospedagem estática procura por `index.html` na raiz; sem ele o deploy retorna **404 NOT_FOUND**.
+
+Depois de editar o `FAVX Landing Page.dc.html`, regenere o `index.html`:
+
+```bash
+node build.js
+```
+
+Faça commit do `index.html` atualizado e o deploy (Vercel) atualiza automaticamente.
