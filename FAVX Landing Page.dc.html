@@ -798,6 +798,109 @@
     .cli-head,.cli-stack{opacity:1;transform:none;}
   }
 
+  /* ============================================================
+     TRIAL FUNNEL — one question at a time, then the contact form
+     ============================================================ */
+  /* full-screen takeover — no panel, no plates behind the options */
+  .qz{position:fixed;inset:0;z-index:200;opacity:0;visibility:hidden;
+    transition:opacity .4s ease,visibility .4s;}
+  .qz.is-open{opacity:1;visibility:visible;}
+  .qz-scrim{position:absolute;inset:0;background:rgba(4,6,14,.86);touch-action:none;
+    backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);}
+  .qz-box{position:relative;width:100%;height:100%;display:flex;overflow-y:auto;
+    overscroll-behavior:contain;background:none;border:0;box-shadow:none;
+    transform:translateY(18px);transition:transform .45s cubic-bezier(.2,.8,.2,1);}
+  .qz.is-open .qz-box{transform:none;}
+  .qz-box:focus{outline:none;}
+  .qz-box::-webkit-scrollbar{width:7px;}
+  .qz-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:7px;}
+  .qz-inner{width:100%;max-width:660px;margin:auto;
+    padding:clamp(64px,9vh,104px) clamp(22px,5vw,40px) clamp(44px,8vh,72px);}
+  .qz-x{position:fixed;top:20px;right:20px;z-index:2;width:40px;height:40px;
+    display:grid;place-items:center;cursor:pointer;color:rgba(255,255,255,.55);
+    background:none;border:0;transition:color .2s,transform .2s;}
+  .qz-x:hover{color:#fff;transform:rotate(90deg);}
+
+  .qz-bar{height:2px;border-radius:2px;background:rgba(255,255,255,.09);overflow:hidden;margin-bottom:18px;}
+  .qz-bar i{display:block;height:100%;width:0;border-radius:2px;
+    background:linear-gradient(90deg,#005CFF,#7c3aed,#FF7A00);
+    transition:width .55s cubic-bezier(.2,.8,.2,1);}
+  .qz-step-n{margin:0 0 26px;font-size:11.5px;font-weight:800;letter-spacing:.2em;
+    text-transform:uppercase;color:rgba(255,255,255,.38);}
+
+  /* a step fades/slides in as a whole */
+  .qz-view{opacity:0;transform:translateY(14px);
+    transition:opacity .45s ease,transform .5s cubic-bezier(.2,.8,.2,1);}
+  .qz-view.is-in{opacity:1;transform:none;}
+  .qz-q{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(27px,4.6vw,42px);line-height:1.14;letter-spacing:-.028em;
+    margin:0 0 clamp(26px,4vh,40px);color:#fff;text-wrap:balance;}
+
+  /* options: free-standing text, nothing behind them */
+  .qz-opts{display:flex;flex-direction:column;}
+  .qz-opt{display:flex;align-items:center;gap:16px;width:100%;text-align:left;cursor:pointer;
+    padding:15px 0;background:none;border:0;font:inherit;
+    font-size:clamp(17px,2.5vw,21px);font-weight:500;line-height:1.35;
+    color:rgba(255,255,255,.72);
+    opacity:0;transform:translateY(9px);
+    transition:opacity .4s ease,transform .4s ease,color .22s ease,padding-left .3s cubic-bezier(.2,.8,.2,1);}
+  .qz-opt.is-in{opacity:1;transform:none;}
+  .qz-opt::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;
+    background:rgba(255,255,255,.22);
+    transition:background .25s ease,transform .3s cubic-bezier(.2,1.4,.4,1),box-shadow .25s ease;}
+  .qz-opt:hover{color:#fff;padding-left:10px;}
+  .qz-opt:hover::before{background:linear-gradient(90deg,#005CFF,#FF7A00);transform:scale(1.25);}
+  .qz-opt.is-picked{color:#fff;}
+  .qz-opt.is-picked::before{background:#005CFF;transform:scale(1.45);
+    box-shadow:0 0 14px rgba(0,92,255,.95);}
+  .qz-opt[disabled]{cursor:default;}
+  .qz-opt[disabled]:hover{padding-left:0;}
+  .qz-opts.is-locked .qz-opt:not(.is-picked){opacity:.32;}
+
+  /* the affirmation that follows an answer — plain text, no plate */
+  .qz-ack{display:flex;gap:12px;align-items:flex-start;margin-top:clamp(24px,4vh,34px);
+    font-size:clamp(15px,2vw,17px);line-height:1.55;color:rgba(255,255,255,.68);
+    opacity:0;transform:translateY(8px);
+    transition:opacity .45s ease,transform .45s cubic-bezier(.2,.8,.2,1);}
+  .qz-ack.is-in{opacity:1;transform:none;}
+  .qz-ack svg{flex:none;margin-top:3px;color:#4b8bff;}
+
+  /* final screen */
+  .qz-done-tag{display:inline-flex;align-items:center;gap:9px;margin-bottom:18px;
+    font-size:11.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#22d37f;}
+  .qz-lead{margin:0 0 10px;font-size:clamp(15px,2vw,17px);line-height:1.6;color:rgba(255,255,255,.68);}
+  .qz-lead b{color:#fff;font-weight:600;}
+  .qz-form{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;margin-top:clamp(26px,4vh,38px);}
+  .qz-field{display:flex;flex-direction:column;gap:5px;padding-bottom:14px;}
+  .qz-field.wide{grid-column:1/-1;}
+  .qz-field label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.4);}
+  /* underline fields — no boxes */
+  .qz-field input{padding:9px 0;font:inherit;font-size:17px;color:#fff;background:none;
+    border:0;border-bottom:1px solid rgba(255,255,255,.16);border-radius:0;
+    transition:border-color .25s ease;}
+  .qz-field input::placeholder{color:rgba(255,255,255,.26);}
+  .qz-field input:focus{outline:none;border-bottom-color:#005CFF;}
+  .qz-field input:user-invalid{border-bottom-color:#ff6b6b;}
+  .qz-send{grid-column:1/-1;margin-top:14px;padding:18px 26px;border-radius:14px;cursor:pointer;
+    font:inherit;font-weight:700;font-size:16.5px;color:#fff;border:1px solid rgba(140,180,255,.5);
+    background:linear-gradient(180deg,rgba(0,102,255,.98),rgba(0,58,190,.98));
+    box-shadow:0 12px 34px rgba(0,92,255,.45),inset 0 1px 0 rgba(255,255,255,.3);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s;}
+  .qz-send:hover{transform:translateY(-2px);box-shadow:0 18px 46px rgba(0,92,255,.6),inset 0 1px 0 rgba(255,255,255,.4);}
+  .qz-note{grid-column:1/-1;margin:14px 0 0;font-size:12.5px;line-height:1.5;
+    color:rgba(255,255,255,.38);text-align:center;}
+
+  @media (max-width:560px){
+    .qz-inner{padding:76px 20px 48px;}
+    .qz-x{top:14px;right:14px;}
+    .qz-form{grid-template-columns:1fr;gap:4px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .qz,.qz-box,.qz-view,.qz-opt,.qz-ack,.qz-bar i,.qz-send{transition:none;}
+    .qz-view,.qz-opt,.qz-ack{opacity:1;transform:none;}
+  }
+
   @media (max-width:760px){
     /* --- tighten the long gaps between stages --- */
     .pl-sec{padding:56px 20px;}
@@ -840,7 +943,7 @@
     <a href="#clients" class="nav-link">Clientes</a>
     <a href="#contact" class="nav-link">Contato</a>
   </div>
-  <a href="#pricing" style="display:inline-flex;align-items:center;padding:10px 20px;border-radius:14px;background:linear-gradient(180deg,rgba(0,92,255,.95),rgba(0,58,190,.95));border:1px solid rgba(140,180,255,.55);color:#fff;font-weight:700;font-size:14px;box-shadow:0 6px 22px rgba(0,92,255,.5),inset 0 1px 0 rgba(255,255,255,.35);" style-hover="color:#fff;">Teste 7 dias grátis</a>
+  <a href="#pricing" style="display:inline-flex;align-items:center;padding:10px 20px;border-radius:14px;background:linear-gradient(180deg,rgba(0,92,255,.95),rgba(0,58,190,.95));border:1px solid rgba(140,180,255,.55);color:#fff;font-weight:700;font-size:14px;box-shadow:0 6px 22px rgba(0,92,255,.5),inset 0 1px 0 rgba(255,255,255,.35);" style-hover="color:#fff;" data-quiz>Teste 7 dias grátis</a>
 
   <button type="button" id="navBurger" class="nav-burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="navMobile">
     <span></span><span></span><span></span>
@@ -851,7 +954,7 @@
     <a href="#ias">IAs</a>
     <a href="#clients">Clientes</a>
     <a href="#contact">Contato</a>
-    <a href="#pricing" class="nav-m-cta">Teste 7 dias grátis</a>
+    <a href="#pricing" class="nav-m-cta" data-quiz>Teste 7 dias grátis</a>
   </div>
 </nav>
 
@@ -871,7 +974,7 @@
     <div class="badge"><i></i>O Futuro da IA Comercial</div>
     <h1>Cresça Sem <span class="hl">Limites</span>.</h1>
     <p class="sub">A FAVX transforma sua operação comercial com Inteligência Artificial que automatiza conversas, qualifica leads, aumenta as vendas e ajuda o seu negócio a escalar sem limites.</p>
-    <a class="cta" href="#pricing">
+    <a class="cta" href="#pricing" data-quiz>
       Teste a FAVX por 7 dias
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
@@ -922,7 +1025,7 @@
       </div>
 
       <div class="pl-foot">
-        <a href="#contact" class="pl-cta">Teste a FAVX por 7 dias</a>
+        <a href="#contact" class="pl-cta" data-quiz>Teste a FAVX por 7 dias</a>
         <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
       </div>
     </article>
@@ -955,7 +1058,7 @@
       </div>
 
       <div class="pl-foot">
-        <a href="#contact" class="pl-cta pl-cta-hot">Teste a FAVX por 7 dias</a>
+        <a href="#contact" class="pl-cta pl-cta-hot" data-quiz>Teste a FAVX por 7 dias</a>
         <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
       </div>
     </article>
@@ -988,7 +1091,7 @@
       </div>
 
       <div class="pl-foot">
-        <a href="#contact" class="pl-cta">Teste a FAVX por 7 dias</a>
+        <a href="#contact" class="pl-cta" data-quiz>Teste a FAVX por 7 dias</a>
         <span class="pl-trial">7 dias grátis &middot; sem compromisso</span>
       </div>
     </article>
@@ -2699,6 +2802,194 @@ class Component extends DCLogic {
     } else {
       card.classList.add('reveal-active');
     }
+  });
+})();
+</script>
+
+<!-- ============ TRIAL FUNNEL — one question at a time ============ -->
+<div class="qz" id="favxQuiz" aria-hidden="true">
+  <div class="qz-scrim" data-qz-close></div>
+  <div class="qz-box" role="dialog" aria-modal="true" aria-labelledby="qzHeading" tabindex="-1">
+    <button type="button" class="qz-x" data-qz-close aria-label="Fechar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="qz-inner">
+      <div class="qz-bar"><i id="qzBar"></i></div>
+      <p class="qz-step-n" id="qzStepN">Etapa 1 de 4</p>
+      <div class="qz-stage" id="qzStage"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const modal = document.getElementById('favxQuiz');
+  const stage = document.getElementById('qzStage');
+  const bar   = document.getElementById('qzBar');
+  const stepN = document.getElementById('qzStepN');
+  if (!modal || !stage) return;
+
+  const box    = modal.querySelector('.qz-box');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const WA     = '5592994486005';   // same number as the footer
+
+  // [option label, affirmation shown after picking it]
+  const STEPS = [
+    { q: 'Qual o maior desafio que sua empresa enfrenta hoje?', opts: [
+      ['Não consigo responder todos os clientes rapidamente.', 'Entendido. A velocidade de resposta costuma ser um fator importante no atendimento. Vamos considerar isso na sua demonstração.'],
+      ['Recebo muitos contatos, mas poucos fecham negócio.', 'Certo. Vamos analisar como sua operação pode aproveitar melhor os contatos que já recebe.'],
+      ['Minha equipe perde tempo com tarefas repetitivas.', 'Perfeito. Identificamos que há oportunidades de otimizar o tempo da sua equipe.'],
+      ['Não tenho um processo comercial organizado.', 'Entendido. Isso nos ajudará a preparar uma demonstração mais adequada ao seu fluxo.'],
+      ['Outro.', 'Obrigado. Vamos considerar essa informação durante a configuração.'],
+    ]},
+    { q: 'Atualmente, qual destas situações acontece com maior frequência?', opts: [
+      ['Clientes demoram para receber resposta.', 'Entendido. Esse cenário é bastante comum em empresas em crescimento.'],
+      ['Conversas ficam sem acompanhamento.', 'Certo. Vamos considerar esse ponto na organização do processo comercial.'],
+      ['A equipe responde sempre as mesmas perguntas.', 'Perfeito. Identificamos um fluxo com alto potencial de automação.'],
+      ['Tenho dificuldade para acompanhar todas as oportunidades.', 'Entendido. Isso normalmente indica necessidade de maior centralização das informações.'],
+      ['Nenhuma das opções.', 'Ótimo. Vamos utilizar as próximas respostas para entender melhor sua operação.'],
+    ]},
+    { q: 'Hoje sua equipe comercial organiza os leads como?', opts: [
+      ['CRM', 'Excelente. Nossa plataforma pode complementar o processo existente sem alterar sua rotina.'],
+      ['Planilhas', 'Entendido. Muitas empresas começam dessa forma antes de automatizar seus processos.'],
+      ['WhatsApp', 'Certo. Vamos considerar um fluxo voltado para centralização do atendimento.'],
+      ['Agenda', 'Perfeito. Isso nos ajuda a entender como sua equipe acompanha os clientes.'],
+      ['Não utilizamos nenhuma organização', 'Entendido. Vamos preparar uma demonstração adaptada para operações em estruturação.'],
+    ]},
+    // every segment shares the same affirmation
+    { q: 'Qual o segmento da sua empresa?', opts:
+      ['Serviços','Comércio','Saúde','Educação','Imobiliário','Indústria','Tecnologia','Outro']
+        .map((o) => [o, 'Perfeito. Estamos personalizando sua demonstração conforme o perfil da sua empresa.']),
+    },
+  ];
+
+  const CHECK = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  const wait  = (ms) => new Promise((r) => setTimeout(r, ms));
+  const esc   = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+  let answers = [], idx = 0, busy = false, lastFocus = null;
+
+  const setBar = (frac) => { if (bar) bar.style.width = Math.round(frac * 100) + '%'; };
+
+  function paint(html) {
+    stage.innerHTML = '<div class="qz-view">' + html + '</div>';
+    const view = stage.firstElementChild;
+    void view.offsetWidth;
+    view.classList.add('is-in');
+    return view;
+  }
+
+  function renderStep(i) {
+    const step = STEPS[i];
+    if (stepN) stepN.textContent = 'Etapa ' + (i + 1) + ' de ' + STEPS.length;
+    setBar(i / STEPS.length);
+
+    const opts = step.opts.map((o, k) =>
+      '<button type="button" class="qz-opt" data-k="' + k + '">' + esc(o[0]) + '</button>').join('');
+    const view = paint('<h3 class="qz-q" id="qzHeading">' + esc(step.q) + '</h3>' +
+                       '<div class="qz-opts">' + opts + '</div>');
+
+    // stagger the options in
+    const btns = [...view.querySelectorAll('.qz-opt')];
+    btns.forEach((b, k) => setTimeout(() => b.classList.add('is-in'), reduce ? 0 : 90 + k * 55));
+    btns.forEach((b) => b.addEventListener('click', () => pick(i, +b.dataset.k, view, btns)));
+  }
+
+  async function pick(i, k, view, btns) {
+    if (busy) return;
+    busy = true;
+    const [label, ack] = STEPS[i].opts[k];
+    answers[i] = label;
+
+    btns[k].classList.add('is-picked');
+    btns.forEach((b) => { b.disabled = true; });
+    view.querySelector('.qz-opts').classList.add('is-locked');
+
+    // affirmation, then advance
+    const el = document.createElement('div');
+    el.className = 'qz-ack';
+    el.innerHTML = CHECK + '<span>' + esc(ack) + '</span>';
+    view.appendChild(el);
+    void el.offsetWidth;
+    el.classList.add('is-in');
+    setBar((i + 1) / STEPS.length);
+
+    await wait(reduce ? 500 : 1750);
+    view.classList.remove('is-in');
+    await wait(reduce ? 60 : 380);
+
+    idx = i + 1;
+    busy = false;
+    if (idx < STEPS.length) renderStep(idx); else renderFinal();
+  }
+
+  function renderFinal() {
+    if (stepN) stepN.textContent = 'Última etapa';
+    setBar(1);
+    const view = paint(
+      '<span class="qz-done-tag">' + CHECK + 'Diagnóstico concluído</span>' +
+      '<h3 class="qz-q" id="qzHeading">Sua demonstração está pronta para ser personalizada.</h3>' +
+      '<p class="qz-lead">Com base nas suas respostas, nossa IA irá preparar uma demonstração personalizada para a realidade da sua empresa.</p>' +
+      '<p class="qz-lead"><b>Preencha seus dados para liberar seu teste gratuito de 7 dias.</b></p>' +
+      '<form class="qz-form" id="qzForm" novalidate>' +
+        '<div class="qz-field"><label for="qzNome">Nome</label><input id="qzNome" name="nome" type="text" autocomplete="name" placeholder="Seu nome" required></div>' +
+        '<div class="qz-field"><label for="qzEmpresa">Empresa</label><input id="qzEmpresa" name="empresa" type="text" autocomplete="organization" placeholder="Nome da empresa" required></div>' +
+        '<div class="qz-field"><label for="qzZap">WhatsApp</label><input id="qzZap" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" required></div>' +
+        '<div class="qz-field"><label for="qzMail">E-mail</label><input id="qzMail" name="email" type="email" autocomplete="email" placeholder="voce@empresa.com" required></div>' +
+        '<button type="submit" class="qz-send">Quero testar gratuitamente</button>' +
+        '<p class="qz-note">Ao enviar, você abrirá uma conversa no WhatsApp com o seu diagnóstico já preenchido.</p>' +
+      '</form>');
+
+    const form = view.querySelector('#qzForm');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const bad = [...form.querySelectorAll('input')].find((f) => !f.value.trim() || !f.checkValidity());
+      if (bad) { bad.focus(); form.querySelectorAll('input').forEach((f) => f.reportValidity && f.reportValidity()); return; }
+      const d = new FormData(form);
+      const linhas = STEPS.map((s, i) => (i + 1) + '. ' + s.q + '\n→ ' + (answers[i] || '—')).join('\n\n');
+      const msg =
+        'Olá! Quero testar a FAVX por 7 dias.\n\n' +
+        'Nome: ' + d.get('nome') + '\nEmpresa: ' + d.get('empresa') +
+        '\nWhatsApp: ' + d.get('whatsapp') + '\nE-mail: ' + d.get('email') +
+        '\n\n--- Diagnóstico ---\n' + linhas;
+      window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+    });
+    setTimeout(() => { const n = view.querySelector('#qzNome'); n && n.focus(); }, reduce ? 0 : 480);
+  }
+
+  function open() {
+    lastFocus = document.activeElement;
+    answers = []; idx = 0; busy = false;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    renderStep(0);
+    setTimeout(() => box && box.focus(), 60);
+  }
+  function close() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    setTimeout(() => { stage.innerHTML = ''; }, 360);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  // every trial CTA opens the funnel instead of jumping to an anchor
+  document.querySelectorAll('[data-quiz]').forEach((el) => {
+    el.addEventListener('click', (e) => { e.preventDefault(); open(); });
+  });
+  modal.querySelectorAll('[data-qz-close]').forEach((el) => el.addEventListener('click', close));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) close();
+  });
+  // keep tabbing inside the dialog
+  modal.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const f = [...modal.querySelectorAll('button,input,[href],[tabindex]:not([tabindex="-1"])')]
+      .filter((n) => !n.disabled && n.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
 })();
 </script>
