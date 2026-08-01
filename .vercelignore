@@ -1,0 +1,14 @@
+# Arquivos de autoria — não fazem parte do site servido.
+# O deploy precisa apenas de index.html + assets/.
+
+# Fonte do builder: index.html é gerado a partir dele por build.js
+FAVX Landing Page.dc.html
+build.js
+
+# Scaffold do builder: a página não instancia nenhum <image-slot>
+image-slot.js
+
+# Material bruto e docs
+assets/_originais/
+README.md
+.vscode/
